@@ -11,10 +11,23 @@ export function effect(fn) {
   _effect.run()
 }
 
+// 将副作用函数添加到代理对象对应的属性的
+export function trackEffect(effect, dep) {
+  dep.set(effect, effect._trackId)
+  // 让effect和deps关联
+  effect.deps[effect._depsLength++] = dep
+}
+
 class ReactiveEffect {
+  // 记录当前effect执行了几次
+  _trackId = 0
+  deps = []
+  _depsLength = 0
+
   // 标记 effect 是否为响应式
   public active = true
-  constructor(public fn, public scheduler?) { }
+  constructor(public fn, public scheduler?) {
+  }
 
   run() {
     // 如果effect不是响应式的, 则执行后直接返回结果
