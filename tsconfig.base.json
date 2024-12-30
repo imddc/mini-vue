@@ -15,7 +15,7 @@
     },
     "resolveJsonModule": true, // 允许导入 JSON 文件
     "strict": true, // 启用严格模式
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "downlevelIteration": true,
     "importHelpers": true, /* Create source map files for emitted JavaScript files. */
     "removeComments": true, // 防止隐式的 `any` 类型
