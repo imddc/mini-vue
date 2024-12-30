@@ -1,4 +1,4 @@
-import { activeEffect, trackEffect } from './effect'
+import { activeEffect, trackEffect, triggerEffects } from './effect'
 
 const targetMap = new WeakMap()
 
@@ -30,7 +30,18 @@ export function track(target, key) {
     // 同时effect.deps(数组)还保持了对dep的引用
     // 即dep是一个map, map的key为当前的激活的effect, 该effect中有一个数组deps,存储用到该effect的(key对应的dep)map
     trackEffect(activeEffect, dep)
+  }
+}
 
-    console.log(targetMap)
+export function trigger(target, key, value, oldValue) {
+  console.log(value, oldValue)
+  const depsMap = targetMap.get(target)
+  if (!depsMap) {
+    return
+  }
+
+  const dep = depsMap.get(key)
+  if (dep) {
+    triggerEffects(dep)
   }
 }

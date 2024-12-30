@@ -11,15 +11,75 @@ export function effect(fn) {
   _effect.run()
 }
 
-// 将副作用函数添加到代理对象对应的属性的
+function preCleanEffect(effect) {
+  effect._depsLength = 0
+  effect._trackId++ // 每次执行id+1, 如果当前同一个effect执行,id是相同的
+}
+
+function cleanDepEffect(dep, effect) {
+  // 删除当前数据对应的副作用
+  dep.delete(effect)
+  // 如果副作用为空 说明数据已经不再被使用
+  if (dep.size === 0) {
+    dep.cleanup()
+  }
+}
+
+function postCleanEffect(effect) {
+  if (effect.deps.length > effect._depsLength) {
+    for (let i = effect._depsLength; i < effect.deps.length; i++) {
+      cleanDepEffect(effect.deps[i], effect)
+    }
+    effect.deps.length = effect._depsLength
+  }
+}
+
+// 依赖收集
 export function trackEffect(effect, dep) {
-  dep.set(effect, effect._trackId)
+  // 由于有preClean的存在, 每个第一次收集的副作用的`_trackId`均为1
+  // 同一个effect中,多次取同一个值 只有第一次会执行这里的逻辑
+  // 第一次 dep.get(effect) -> undefined  effect._trackId -> 1
+  // 第二次 dep.get(effect) -> 1  effect._trackId -> 1
+  // ...
+  // 值发生变化
+  // dep.get(effect) -> 1 effect._trackId -> 2
+  // 后续取相同的值 dep.get(effect) -> 2 effect._trackId -> 2
+  // ...
+  // 结论: 优化了多余的收集 只有第一次读取和值变化时,才会进行依赖收集
+  if (dep.get(effect) !== effect._trackId) {
+    dep.set(effect, effect._trackId)
+
+    const oldDep = effect.deps[effect._depsLength]
+    if (oldDep !== dep) {
+      //
+      if (oldDep) {
+        // 删除老的dep
+        cleanDepEffect(effect, dep)
+      }
+
+      effect.deps[effect._depsLength++] = dep
+    } else {
+      effect._depsLength++
+    }
+  }
+
   // 让effect和deps关联
-  effect.deps[effect._depsLength++] = dep
+  // effect.deps[effect._depsLength++] = dep
+}
+
+// 触发依赖
+export function triggerEffects(dep) {
+  // 取出全部副作用执行
+  for (const effect of dep.keys()) {
+    if (effect.scheduler) {
+      effect.scheduler()
+    }
+  }
 }
 
 class ReactiveEffect {
-  // 记录当前effect执行了几次
+  // 记录effect执行次数,防止一个属性在当前effect中多次收集依赖
+  // 拿到上一次依赖的最后一个和这次的比较
   _trackId = 0
   deps = []
   _depsLength = 0
@@ -39,9 +99,11 @@ class ReactiveEffect {
     try {
       // 每次执行, 将当前的副作用函数添加到全局活跃的副作用函数中
       activeEffect = this
-      // 在fn处依赖收集
+      // 每次执行副作用前,清理依赖项
+      preCleanEffect(this)
       this.fn()
     } finally {
+      postCleanEffect(this)
       // activeEffect应只在effect中时才为具体值
       activeEffect = lastEffect
     }
