@@ -6,17 +6,12 @@
 
 ```plaintext
 mini-vue/
-├── apps/            # 演练场应用目录
-│   ├── demo-app/    # 一个示例应用
-├── packages/        # 本地包目录
-│   ├── core/        # 核心库
-│   ├── runtime/     # 运行时
-│   ├── compiler/    # 编译器
-│   ├── shared/      # 通用工具和代码
-│   ├── reactivity/      # 通用工具和代码
-├── test/            # 测试目录
-├── .eslin.config.mjs     # ESLint 配置文件
-├── commitlint.config.js # Commitlint 配置文件
+├── packages/       # 本地包目录
+│   ├── reactivity/ # 响应式
+│   ├── vue/        # 目标产物和示例
+│   ├── .../        # 其他核心组件
+├── eslint.config.mjs     # ESLint 配置文件
+├── commitlint.config.js  # Commitlint 配置文件
 ├── package.json     # 项目根 package.json 文件
 ├── pnpm-workspace.yaml # Monorepo 配置文件
 └── README.md        # 项目文档
@@ -27,7 +22,8 @@ mini-vue/
 - 现代化开发： 使用 TypeScript 实现 Vue 的核心功能。
 - 模块化架构： 采用 Monorepo 管理多个包模块，易于扩展和维护。
 - 最佳实践： 集成 ESLint、Prettier、lint-staged、commitlint 等工具，确保代码风格统一和提交规范。
-- 实时演练场： 在 apps 目录下提供演示应用，方便测试和验证功能。
+- 测试驱动开发： 使用vitest, 所有测试文件应位于`packages/**/__tests__`目录下。
+- 实时演练场： 在 `packages/vue/example` 目录下提供演示应用，方便测试和验证功能。
 
 ## 常用命令
 
@@ -67,6 +63,7 @@ pnpm test
 ```
 
 示例：
-• feat(core): 添加响应式系统
-• fix(runtime): 修复渲染 bug
-• docs: 更新 README
+
+- feat(core): 添加响应式系统
+- fix(runtime): 修复渲染 bug
+- docs: 更新 README
