@@ -1,4 +1,6 @@
+import { isObject } from 'packages/shared'
 import { track, trigger } from './reactiveEffect'
+import { reactive } from './reactive'
 
 export enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive',
@@ -12,7 +14,11 @@ export const mutableHandler: ProxyHandler<any> = {
 
     track(target, key)
 
-    return Reflect.get(target, key, receiver)
+    const res = Reflect.get(target, key, receiver)
+    if (isObject(res)) {
+      return reactive(res)
+    }
+    return res
   },
   set(target, key, value, recevier) {
     const oldValue = target[key]
