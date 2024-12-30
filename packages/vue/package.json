@@ -1,0 +1,20 @@
+{
+  "name": "mini-vue",
+  "version": "0.0.1",
+  "description": "mini-vue for learning",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "scripts": {
+    "serve": "serve ./example/ -p 8080"
+  },
+  "dependencies": {
+    "@mini-vue/reactivity": "workspace:^"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

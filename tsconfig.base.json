@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // 统一输出的 JavaScript 版本
+    "lib": [
+      "ES2020",
+      "DOM"
+    ], // 标准库
+    "baseUrl": ".", // 设置路径的基础目录为项目根目录
+    "module": "ESNext", // 使用 ES 模块系统
+    "moduleResolution": "Node",
+    "paths": { // 路径别名，方便跨包引用
+      "@mini-vue/*": [
+        "packages/*/src"
+      ]
+    },
+    "resolveJsonModule": true, // 允许导入 JSON 文件
+    "strict": true, // 启用严格模式
+    "noImplicitAny": true,
+    "downlevelIteration": true,
+    "importHelpers": true, /* Create source map files for emitted JavaScript files. */
+    "removeComments": true, // 防止隐式的 `any` 类型
+    "esModuleInterop": true, // 支持 CommonJS 和 ES 模块互操作
+    "forceConsistentCasingInFileNames": true, // 强制文件名大小写一致
+    "skipLibCheck": true // 跳过库类型检查以提高编译速度
+  },
+  // 包含所有包的代码
+  "include": [
+    "packages/**/*"
+  ],
+  // 排除不需要编译的文件夹
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
