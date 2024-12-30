@@ -1,14 +1,23 @@
 // eslint-disable-next-line import/no-mutable-exports
 export let activeEffect
 
-export function effect(fn) {
+export function effect(fn, options?) {
   const _effect = new ReactiveEffect(fn, () => {
     // scheduler
     _effect.run()
   })
-
   // 默认执行一次
   _effect.run()
+
+  if (options) {
+    Object.assign(_effect, options)
+  }
+
+  const runner = _effect.run.bind(_effect)
+  // @ts-expect-error add a prop on a function
+  runner.effect = _effect
+
+  return runner
 }
 
 function preCleanEffect(effect) {
