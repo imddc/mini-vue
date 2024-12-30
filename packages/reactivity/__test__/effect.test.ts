@@ -58,6 +58,26 @@ describe('effect', () => {
     expect(activeEffect).toBeUndefined()
   })
 
+  it('should be call once when use multiple times', () => {
+    function test(v) {
+      return v
+    }
+    const spy = vi.fn()
+    const state = reactive({ value: 1 })
+
+    effect(() => {
+      const res = state.value + state.value + state.value + state.value + state.value
+      test(res)
+      spy()
+    })
+
+    expect(spy).toBeCalledTimes(1)
+    state.value++
+
+    // why not 4 ?
+    expect(spy).toBeCalledTimes(2)
+  })
+
   it('should test simple scheduler', () => {
     const spy = vi.fn(v => v)
     const state = reactive({ a: 1 })
