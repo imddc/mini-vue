@@ -7,8 +7,16 @@ import { isObject } from '@mini-vue/shared'
  */
 const reactiveMap = new WeakMap()
 
+export enum ReactiveFlags {
+  IS_REACTIVE = '__v_isReactive',
+}
+
 const mutableHandler: ProxyHandler<any> = {
   get(target, key, receiver) {
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return true
+    }
+
     return Reflect.get(target, key, receiver)
   },
   set(target, key, value, recevier) {
@@ -28,6 +36,10 @@ function createReactive(target) {
   const exitsProxy = reactiveMap.get(target)
   if (exitsProxy) {
     return exitsProxy
+  }
+
+  if (target[ReactiveFlags.IS_REACTIVE]) {
+    return target
   }
 
   const proxy = new Proxy(target, mutableHandler)
