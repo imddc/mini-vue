@@ -18,9 +18,12 @@ describe('effect', () => {
 
   it('should be empty when use reactive outside effect', () => {
     const state = reactive({ value: 1 })
+    function test(v) {
+      return v
+    }
 
     effect(() => {
-      console.log(state.value)
+      test(state.value)
       expect(activeEffect).not.toBeUndefined()
     })
 
@@ -33,17 +36,22 @@ describe('effect', () => {
 
   it('should be well in nested effect', () => {
     const state = reactive({ foo: 1, bar: 2 })
+    function test(v) {
+      return v
+    }
 
     effect(() => {
-      console.log(state.foo)
+      test(state.foo)
       expect(activeEffect).not.toBeUndefined()
 
       effect(() => {
-        console.log(state.bar)
+        test(state.bar)
+        expect(activeEffect).not.toBeUndefined()
       })
 
       effect(() => {
-        console.log(state.foo)
+        test(state.bar)
+        expect(activeEffect).not.toBeUndefined()
       })
     })
 
@@ -64,11 +72,16 @@ describe('effect', () => {
   it('should test custom scheduler', () => {
     const spy = vi.fn(v => v)
     const state = reactive({ a: 1 })
+    function test(v) {
+      return v
+    }
+
     effect(() => {
       spy(state.a)
     }, {
       scheduler: () => {
-        console.log('custom scheduler -> state change but spy didn\'t call')
+        // custom scheduler -> state change but spy didn\'t call
+        test(`well here there is no call to the runner, so it is said that the side effect function will not be triggered`)
       },
     })
     expect(spy).toBeCalledTimes(1)
