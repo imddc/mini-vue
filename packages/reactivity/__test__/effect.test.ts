@@ -1,4 +1,3 @@
-import { scheduler } from 'node:timers/promises'
 import { describe, expect, it, vi } from 'vitest'
 import { reactive } from '../src/reactive'
 import { activeEffect, effect } from '../src/effect'

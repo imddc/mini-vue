@@ -80,8 +80,10 @@ export function trackEffect(effect, dep) {
 export function triggerEffects(dep) {
   // 取出全部副作用执行
   for (const effect of dep.keys()) {
-    if (effect.scheduler) {
-      effect.scheduler()
+    if (!effect._isRunning) {
+      if (effect.scheduler) {
+        effect.scheduler()
+      }
     }
   }
 }
@@ -92,6 +94,7 @@ class ReactiveEffect {
   _trackId = 0
   deps = []
   _depsLength = 0
+  _running = 0
 
   // 标记 effect 是否为响应式
   public active = true
@@ -110,8 +113,10 @@ class ReactiveEffect {
       activeEffect = this
       // 每次执行副作用前,清理依赖项
       preCleanEffect(this)
+      this._running++
       this.fn()
     } finally {
+      this._running--
       postCleanEffect(this)
       // activeEffect应只在effect中时才为具体值
       activeEffect = lastEffect
