@@ -20,6 +20,7 @@ function createReactive(target) {
     return exitsProxy
   }
 
+  // 如果被代理对象已经是一个reactive了, 则直接返回本身
   if (target[ReactiveFlags.IS_REACTIVE]) {
     return target
   }
@@ -30,10 +31,13 @@ function createReactive(target) {
   return proxy
 }
 
-function reactive(target) {
+export function reactive(target) {
   return createReactive(target)
 }
 
-export {
-  reactive,
+/**
+ * @description 用于将引用类型转为reactive
+ */
+export function toReactive(value) {
+  return isObject(value) ? reactive(value) : value
 }
