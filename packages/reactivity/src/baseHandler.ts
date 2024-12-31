@@ -1,4 +1,4 @@
-import { isObject } from 'packages/shared'
+import { isObject } from '@mini-vue/shared'
 import { track, trigger } from './reactiveEffect'
 import { reactive } from './reactive'
 

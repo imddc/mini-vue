@@ -2,7 +2,7 @@
   "name": "@mini-vue/reactivity",
   "version": "1.0.0",
   "private": true,
-  "main": "index.ts",
+  "main": "./src/index.ts",
   "dependencies": {
     "@mini-vue/shared": "workspace:^"
   }

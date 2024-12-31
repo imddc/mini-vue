@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { reactive } from '../src/reactive'
 import { activeEffect, effect } from '../src/effect'
 
+function test(v) {
+  return v
+}
+
 describe('effect', () => {
   it('should run 1 time', () => {
     const spy = vi.fn()
@@ -17,9 +21,6 @@ describe('effect', () => {
 
   it('should be empty when use reactive outside effect', () => {
     const state = reactive({ value: 1 })
-    function test(v) {
-      return v
-    }
 
     effect(() => {
       test(state.value)
@@ -35,9 +36,6 @@ describe('effect', () => {
 
   it('should be well in nested effect', () => {
     const state = reactive({ foo: 1, bar: 2 })
-    function test(v) {
-      return v
-    }
 
     effect(() => {
       test(state.foo)
@@ -58,9 +56,6 @@ describe('effect', () => {
   })
 
   it('should be call once when use multiple times', () => {
-    function test(v) {
-      return v
-    }
     const spy = vi.fn()
     const state = reactive({ value: 1 })
 
@@ -73,7 +68,41 @@ describe('effect', () => {
     expect(spy).toBeCalledTimes(1)
     state.value++
 
-    // why not 4 ?
+    // think about why not 4 ?
+    expect(spy).toBeCalledTimes(2)
+  })
+
+  it('should test prop\'s quantily changed in effect', () => {
+    const state = reactive({ flag: false, a: 1 })
+
+    // effect dep before -> flag,
+    // effect dep after -> flag, a
+    effect(() => {
+      test(state.flag ? state.a : 1)
+    })
+
+    // effect dep before -> flag, a
+    // effect dep after -> flag
+    effect(() => {
+      test(state.flag ? 1 : state.a)
+    })
+
+    state.flag = true
+  })
+
+  it('should run effect when set', () => {
+    const spy = vi.fn()
+    const state = reactive({ value: 1 })
+
+    effect(() => {
+      test(state.value)
+      spy()
+    })
+
+    expect(spy).toBeCalledTimes(1)
+
+    state.value++
+
     expect(spy).toBeCalledTimes(2)
   })
 
@@ -91,9 +120,6 @@ describe('effect', () => {
   it('should test custom scheduler', () => {
     const spy = vi.fn(v => v)
     const state = reactive({ a: 1 })
-    function test(v) {
-      return v
-    }
 
     effect(() => {
       spy(state.a)
@@ -121,20 +147,4 @@ describe('effect', () => {
     state.a++
     expect(spy).toBeCalledTimes(3)
   })
-
-  // it('should run effect when set', () => {
-  //   const spy = vi.fn()
-  //   const state = reactive({ value: 1 })
-  //
-  //   effect(() => {
-  //     console.log(state.value)
-  //     spy()
-  //   })
-  //
-  //   expect(spy).toBeCalledTimes(1)
-  //
-  //   state.value++
-  //
-  //   expect(spy).toBeCalledTimes(2)
-  // })
 })

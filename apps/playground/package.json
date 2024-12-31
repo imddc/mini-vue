@@ -1,0 +1,14 @@
+{
+  "name": "@mini-vue/playground",
+  "private": true,
+  "description": "a playground for @mini-vue dev",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@mini-vue/reactivity": "workspace:^"
+  },
+  "devDependencies": {
+    "vite": "^6.0.6"
+  }
+}

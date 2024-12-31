@@ -11,8 +11,7 @@
     "test:ui": "vitest --ui",
     "lint": "oxlint && eslint",
     "lint:fix": "oxlint --fix && eslint --fix",
-    "reactivity": "pnpm -F @mini-vue/reactivity",
-    "vue": "pnpm -F vue"
+    "playground": "pnpm -F @mini-vue/playground"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",

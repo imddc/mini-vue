@@ -63,9 +63,11 @@ export function trackEffect(effect, dep) {
       //
       if (oldDep) {
         // 删除老的dep
-        cleanDepEffect(effect, dep)
+        cleanDepEffect(dep, effect)
       }
 
+      // _trackId: 每次执行effect的时候都 + 1
+      // depsLength: 每次执行effect都会清零,但每次get都会+1
       effect.deps[effect._depsLength++] = dep
     } else {
       effect._depsLength++
