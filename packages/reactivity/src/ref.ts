@@ -105,9 +105,9 @@ class RefImpl {
 }
 
 class ObjectRefImpl {
-  public [ReactiveFlags.IS_REF] = true
+  private [ReactiveFlags.IS_REF] = true
 
-  constructor(public _object, public _key) { }
+  constructor(private _object, private _key) { }
 
   get value() {
     return this._object[this._key]
