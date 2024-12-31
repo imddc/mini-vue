@@ -1,6 +1,7 @@
 import { isObject } from '@mini-vue/shared'
 import { track, trigger } from './reactiveEffect'
-import { ReactiveFlags, reactive } from './reactive'
+import { reactive } from './reactive'
+import { ReactiveFlags } from './constants'
 
 export const mutableHandler: ProxyHandler<any> = {
   get(target, key, receiver) {

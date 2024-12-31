@@ -1,17 +1,22 @@
+import { ReactiveFlags } from './constants'
 import { activeEffect, trackEffect, triggerEffects } from './effect'
 import { toReactive } from './reactive'
 import { createDep } from './reactiveEffect'
 
-export enum RefFlags {
-  IS_REF = '__v_isRef',
+declare const RefSymbol: unique symbol
+export interface Ref<T = any, S = T> {
+  get value(): T
+  set value(_: S)
+  /**
+   * Type differentiator only.
+   * We need this to be in public d.ts but don't want it to show up in IDE
+   * autocomplete, so we use a private Symbol instead.
+   */
+  [RefSymbol]: true
 }
 
-export function ref(value) {
-  return createRef(value)
-}
-
-function createRef(value) {
-  return new RefImpl(value)
+export function ref(rawValue) {
+  return createRef(rawValue)
 }
 
 export function toRef(object, key) {
@@ -24,6 +29,36 @@ export function toRefs(object) {
     result[key] = toRef(object, key)
   }
   return result
+}
+
+export function isRef<T>(r: Ref<T> | unknown): r is Ref<T>
+export function isRef(r: any): r is Ref {
+  return r ? r[ReactiveFlags.IS_REF] === true : false
+}
+
+export function proxyRefs(objectWithRef) {
+  return new Proxy(objectWithRef, {
+    get(target, key, reveiver) {
+      const r = Reflect.get(target, key, reveiver)
+      return r[ReactiveFlags.IS_REF] ? r.value : r
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key]
+      if (oldValue[ReactiveFlags.IS_REF]) {
+        target[key].value = value
+        return true
+      }
+      return Reflect.set(target, key, value, receiver)
+    },
+  })
+}
+
+function createRef(rawValue) {
+  if (rawValue[ReactiveFlags.IS_REF]) {
+    return rawValue
+  }
+
+  return new RefImpl(rawValue)
 }
 
 function trackRefValue(ref) {
@@ -43,12 +78,12 @@ function triggerRefValue(ref) {
 }
 
 class RefImpl {
-  public [RefFlags.IS_REF] = true
+  private [ReactiveFlags.IS_REF] = true
   // 保存ref的值
-  public _value
+  private _value
   // 用于收集对应的effect,见track函数
-  public dep
-  constructor(public rawValue /* rawValue : 原始值 */) {
+  private dep
+  constructor(private rawValue /* rawValue : 原始值 */) {
     // 如果传入的原始值为一个对象,则 将内部值变为原始值的reactive
     this._value = toReactive(rawValue)
   }
@@ -70,7 +105,7 @@ class RefImpl {
 }
 
 class ObjectRefImpl {
-  public [RefFlags.IS_REF] = true
+  public [ReactiveFlags.IS_REF] = true
 
   constructor(public _object, public _key) { }
 

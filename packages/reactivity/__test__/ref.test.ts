@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { effect } from '../src/effect'
-import { ref, toRef, toRefs } from '../src/ref'
+import { proxyRefs, ref, toRef, toRefs } from '../src/ref'
 import { reactive } from '../src/reactive'
 
 function test(v) {
@@ -111,6 +111,7 @@ describe('ref', () => {
     const spy = vi.fn(v => v)
     const state = reactive({ a: 1, b: 2 })
 
+    // @ts-expect-error don't care
     const { a, b } = toRefs(state)
 
     effect(() => {
@@ -138,5 +139,47 @@ describe('ref', () => {
     expect(spy).toBeCalledTimes(5)
     expect(a.value).toBe(3)
     expect(b.value).toBe(4)
+  })
+
+  it('should test proxyRefs', () => {
+    const spy = vi.fn(v => v)
+    const state = reactive({ a: 1, b: 2 })
+
+    const proxyRef = proxyRefs({ ...toRefs(state) })
+
+    effect(() => {
+      spy(proxyRef.a + proxyRef.b)
+    })
+
+    expect(spy).toBeCalledTimes(1)
+
+    proxyRef.a++
+    proxyRef.b++
+
+    expect(spy).toBeCalledTimes(3)
+
+    const proxyRef_2 = ref(1)
+
+    effect(() => {
+      spy(proxyRef_2)
+    })
+
+    expect(spy).toBeCalledTimes(4)
+    expect(proxyRef_2.value).toBe(1)
+  })
+
+  it('should test nested ref', () => {
+    const inner = ref(1)
+
+    const state = ref(inner)
+
+    expect(state.value).toBe(1)
+
+    // 可以看到 ref(ref(x)) 和 ref(x) 具有相同的引用
+    expect(state).toBe(inner)
+
+    inner.value++
+
+    expect(state.value).toBe(2)
   })
 })
