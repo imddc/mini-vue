@@ -1,5 +1,5 @@
 import { isObject } from '@mini-vue/shared'
-import { ReactiveFlags, mutableHandler } from './baseHandler'
+import { mutableHandler } from './baseHandler'
 
 /**
  * 用于记录代理后的结果
@@ -7,6 +7,10 @@ import { ReactiveFlags, mutableHandler } from './baseHandler'
  * value: proxy obj
  */
 const reactiveMap = new WeakMap()
+
+export enum ReactiveFlags {
+  IS_REACTIVE = '__v_isReactive',
+}
 
 function createReactive(target) {
   if (!isObject(target)) {

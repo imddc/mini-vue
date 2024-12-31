@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { reactive } from '../src/reactive'
+import { effect } from '../src/effect'
+
+function test(v) {
+  return v
+}
 
 describe('reactive', () => {
   it('should has cache', () => {
@@ -26,7 +31,19 @@ describe('reactive', () => {
     expect(proxyProxyObj).toBe(proxyObj)
   })
 
-  it('should be a test', () => {
-    expect(1).toBe(1)
+  it('should test nested reacitve', () => {
+    const spy = vi.fn()
+    const state = reactive({ a: { b: 1 } })
+
+    effect(() => {
+      spy()
+      test(state.a.b)
+    })
+
+    expect(spy).toBeCalledTimes(1)
+
+    state.a.b = 2
+
+    expect(spy).toBeCalledTimes(2)
   })
 })

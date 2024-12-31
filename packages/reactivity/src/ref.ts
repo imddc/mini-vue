@@ -2,12 +2,20 @@ import { activeEffect, trackEffect, triggerEffects } from './effect'
 import { toReactive } from './reactive'
 import { createDep } from './reactiveEffect'
 
+export enum RefFlags {
+  IS_REF = '__v_isRef',
+}
+
 export function ref(value) {
   return createRef(value)
 }
 
 export function createRef(value) {
   return new RefImpl(value)
+}
+
+export function toRef(object, key) {
+  return new ObjectRefImpl(object, key)
 }
 
 function trackRefValue(ref) {
@@ -27,7 +35,7 @@ function triggerRefValue(ref) {
 }
 
 class RefImpl {
-  public __v_isRef = true
+  public [RefFlags.IS_REF] = true
   // 保存ref的值
   public _value
   // 用于收集对应的effect,见track函数
@@ -50,5 +58,19 @@ class RefImpl {
       this._value = newValue
       triggerRefValue(this)
     }
+  }
+}
+
+class ObjectRefImpl {
+  public [RefFlags.IS_REF] = true
+
+  constructor(public _object, public _key) { }
+
+  get value() {
+    return this._object[this._key]
+  }
+
+  set value(value) {
+    this._object[this._key] = value
   }
 }
