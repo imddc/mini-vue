@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { effect } from '../src/effect'
-import { ref, toRef } from '../src/ref'
+import { ref, toRef, toRefs } from '../src/ref'
 import { reactive } from '../src/reactive'
 
 function test(v) {
@@ -105,5 +105,38 @@ describe('ref', () => {
     aToRef.value++
     expect(aToRef.value).toBe(4)
     // perfect !
+  })
+
+  it('should test toRefs', () => {
+    const spy = vi.fn(v => v)
+    const state = reactive({ a: 1, b: 2 })
+
+    const { a, b } = toRefs(state)
+
+    effect(() => {
+      spy(state.a + state.b)
+    })
+
+    expect(spy).toBeCalledTimes(1)
+
+    a.value++
+    expect(spy).toBeCalledTimes(2)
+    expect(state.a).toBe(2)
+    expect(state.b).toBe(2)
+
+    b.value++
+    expect(spy).toBeCalledTimes(3)
+    expect(state.a).toBe(2)
+    expect(state.b).toBe(3)
+
+    state.a++
+    expect(spy).toBeCalledTimes(4)
+    expect(a.value).toBe(3)
+    expect(b.value).toBe(3)
+
+    state.b++
+    expect(spy).toBeCalledTimes(5)
+    expect(a.value).toBe(3)
+    expect(b.value).toBe(4)
   })
 })

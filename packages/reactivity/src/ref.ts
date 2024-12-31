@@ -10,12 +10,20 @@ export function ref(value) {
   return createRef(value)
 }
 
-export function createRef(value) {
+function createRef(value) {
   return new RefImpl(value)
 }
 
 export function toRef(object, key) {
   return new ObjectRefImpl(object, key)
+}
+
+export function toRefs(object) {
+  const result = {}
+  for (const key in object) {
+    result[key] = toRef(object, key)
+  }
+  return result
 }
 
 function trackRefValue(ref) {
