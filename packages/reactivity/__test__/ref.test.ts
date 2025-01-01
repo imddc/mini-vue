@@ -39,18 +39,13 @@ describe('ref', () => {
     effect(() => {
       spy(flag.value)
     })
-
     expect(spy).toBeCalledTimes(1)
 
-    effect(() => {
-      spy(flag.value)
-    })
-
+    flag.value = false
     expect(spy).toBeCalledTimes(2)
 
-    flag.value = false
-
-    expect(spy).toBeCalledTimes(3)
+    // flag.value = true
+    // expect(spy).toBeCalledTimes(3)
   })
 
   it('should test toRef', () => {

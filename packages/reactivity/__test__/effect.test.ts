@@ -73,21 +73,42 @@ describe('effect', () => {
   })
 
   it('should test prop\'s quantily changed in effect', () => {
+    const spy = vi.fn(v => v)
     const state = reactive({ flag: false, a: 1 })
 
     // effect dep before -> flag,
     // effect dep after -> flag, a
     effect(() => {
-      test(state.flag ? state.a : 1)
+      spy(state.flag ? state.a : 1)
     })
 
-    // effect dep before -> flag, a
-    // effect dep after -> flag
-    effect(() => {
-      test(state.flag ? 1 : state.a)
-    })
+    expect(spy).toBeCalledTimes(1)
+
+    state.a++
+    expect(spy).toBeCalledTimes(1)
+
+    state.a++
+    expect(spy).toBeCalledTimes(1)
 
     state.flag = true
+    expect(spy).toBeCalledTimes(2)
+
+    state.a++
+    expect(spy).toBeCalledTimes(3)
+
+    state.a++
+    expect(spy).toBeCalledTimes(4)
+
+    state.flag = false
+    expect(spy).toBeCalledTimes(5)
+
+    state.a++
+    expect(spy).toBeCalledTimes(5)
+
+    state.a++
+    expect(spy).toBeCalledTimes(5)
+
+    // this test explained cleanup is work
   })
 
   it('should run effect when set', () => {
