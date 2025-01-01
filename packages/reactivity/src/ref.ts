@@ -61,7 +61,7 @@ function createRef(rawValue) {
   return new RefImpl(rawValue)
 }
 
-function trackRefValue(ref) {
+export function trackRefValue(ref) {
   if (activeEffect) {
     trackEffect(
       activeEffect,
@@ -70,7 +70,7 @@ function trackRefValue(ref) {
   }
 }
 
-function triggerRefValue(ref) {
+export function triggerRefValue(ref) {
   const dep = ref.dep
   if (dep) {
     triggerEffects(dep)

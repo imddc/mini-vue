@@ -3,10 +3,6 @@ import { effect } from '../src/effect'
 import { proxyRefs, ref, toRef, toRefs } from '../src/ref'
 import { reactive } from '../src/reactive'
 
-function test(v) {
-  return v
-}
-
 describe('ref', () => {
   it('should use a raw value', () => {
     const isTrue = ref(true)
@@ -16,6 +12,9 @@ describe('ref', () => {
     isTrue.value = false
 
     expect(isTrue.value).toBeFalsy()
+
+    isTrue.value = true
+    expect(isTrue.value).toBeTruthy()
   })
 
   it('should use a refference value', () => {
@@ -31,52 +30,27 @@ describe('ref', () => {
 
     expect(state.value.a).toBe(1)
     expect(state_2.value.a).toBe(1)
-
-    // [ ] todo: ref作为参数
-    // const state_3 = ref(state)
-    // expect(state_3.value).toMatchInlineSnapshot(`
-    //   RefImpl {
-    //     "__v_isRef": true,
-    //     "_value": {
-    //       "a": 1,
-    //     },
-    //     "rawValue": {
-    //       "a": 1,
-    //     },
-    //   }
-    // `)
-    //
-    // expect(state_3._value).toMatchInlineSnapshot(`
-    //   RefImpl {
-    //     "__v_isRef": true,
-    //     "_value": {
-    //       "a": 1,
-    //     },
-    //     "rawValue": {
-    //       "a": 1,
-    //     },
-    //   }
-    // `)
   })
 
   it('should test effect', () => {
-    const spy = vi.fn()
+    const spy = vi.fn(v => v)
     const flag = ref(true)
 
     effect(() => {
-      test(flag.value)
-      spy()
+      spy(flag.value)
     })
 
     expect(spy).toBeCalledTimes(1)
 
     effect(() => {
-      test(flag.value)
+      spy(flag.value)
     })
 
-    // flag.value = false
+    expect(spy).toBeCalledTimes(2)
 
-    expect(spy).toBeCalledTimes(1)
+    flag.value = false
+
+    expect(spy).toBeCalledTimes(3)
   })
 
   it('should test toRef', () => {

@@ -1,3 +1,5 @@
+import { DirtyLevels } from './constants'
+
 // eslint-disable-next-line import/no-mutable-exports
 export let activeEffect
 
@@ -73,16 +75,16 @@ export function trackEffect(effect, dep) {
       effect._depsLength++
     }
   }
-
-  // 让effect和deps关联
-  // effect.deps[effect._depsLength++] = dep
 }
 
 // 触发依赖
 export function triggerEffects(dep) {
   // 取出全部副作用执行
   for (const effect of dep.keys()) {
-    if (!effect._isRunning) {
+    if (effect._dirtyLevel < DirtyLevels.Dirty) {
+      effect._dirtyLevel = DirtyLevels.Dirty
+    }
+    if (!effect._running) {
       if (effect.scheduler) {
         effect.scheduler()
       }
@@ -90,23 +92,37 @@ export function triggerEffects(dep) {
   }
 }
 
-class ReactiveEffect {
+export class ReactiveEffect {
   // 记录effect执行次数,防止一个属性在当前effect中多次收集依赖
   // 拿到上一次依赖的最后一个和这次的比较
   _trackId = 0
   deps = []
   _depsLength = 0
   _running = 0
+  _dirtyLevel = DirtyLevels.Dirty
 
   // 标记 effect 是否为响应式
   public active = true
+
   constructor(public fn, public scheduler?) {
   }
 
+  // 获取当前是否为dirty
+  public get dirty() {
+    return this._dirtyLevel === DirtyLevels.Dirty
+  }
+
+  public set dirty(v) {
+    this._dirtyLevel = v ? DirtyLevels.Dirty : DirtyLevels.NoDirty
+  }
+
   run() {
+    this._dirtyLevel = DirtyLevels.NoDirty
+
     // 如果effect不是响应式的, 则执行后直接返回结果
     if (!this.active) {
-      this.fn()
+      const res = this.fn()
+      return res
     }
 
     const lastEffect = activeEffect
@@ -116,7 +132,8 @@ class ReactiveEffect {
       // 每次执行副作用前,清理依赖项
       preCleanEffect(this)
       this._running++
-      this.fn()
+      const res = this.fn()
+      return res
     } finally {
       this._running--
       postCleanEffect(this)
