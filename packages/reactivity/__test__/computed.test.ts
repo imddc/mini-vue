@@ -23,7 +23,7 @@ describe('computed', () => {
 
     b.value = 3
     a.value = 3
-    expect(c.value).toMatchInlineSnapshot(`6`)
+    expect(c.value).toBe(6)
     expect(spy).toHaveBeenCalledTimes(4)
   })
 })

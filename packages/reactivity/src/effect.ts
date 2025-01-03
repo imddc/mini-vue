@@ -95,14 +95,14 @@ export function triggerEffects(dep) {
 export class ReactiveEffect {
   // 记录effect执行次数,防止一个属性在当前effect中多次收集依赖
   // 拿到上一次依赖的最后一个和这次的比较
-  _trackId = 0
-  deps = []
-  _depsLength = 0
-  _running = 0
-  _dirtyLevel = DirtyLevels.Dirty
+  private _trackId = 0
+  private deps = []
+  private _depsLength = 0
+  private _running = 0
+  private _dirtyLevel = DirtyLevels.Dirty
 
   // 标记 effect 是否为响应式
-  public active = true
+  private active = true
 
   constructor(public fn, public scheduler?) {
   }
@@ -137,6 +137,14 @@ export class ReactiveEffect {
       postCleanupEffect(this)
       // activeEffect应只在effect中时才为具体值
       activeEffect = lastEffect
+    }
+  }
+
+  stop() {
+    if (this.active) {
+      preCleanEffect(this)
+      postCleanupEffect(this)
+      this.active = false
     }
   }
 }

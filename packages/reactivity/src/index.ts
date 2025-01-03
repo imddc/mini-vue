@@ -8,3 +8,4 @@ export {
   proxyRefs,
 } from './ref'
 export { computed } from './computed'
+export { watch } from './watch'
