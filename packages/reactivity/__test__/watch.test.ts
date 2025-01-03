@@ -58,14 +58,39 @@ describe('watch', () => {
 
   it('should test watchEffect', () => {
     const spy = vi.fn(v => v)
-    const count = ref(1)
+    const count_a = ref(1)
+    const count_b = ref(1)
 
     watchEffect(() => {
-      spy(count.value)
+      spy(count_a.value + count_b.value)
     })
     expect(spy).toBeCalledTimes(1)
 
-    count.value++
+    count_a.value++
+    expect(spy).toBeCalledTimes(2)
+
+    count_b.value++
+    expect(spy).toBeCalledTimes(3)
+  })
+
+  it('should test unwatch', () => {
+    const spy = vi.fn(v => v)
+    const count_a = ref(1)
+
+    const unwatch = watchEffect(() => {
+      spy(count_a.value)
+    })
+    expect(spy).toBeCalledTimes(1)
+
+    count_a.value++
+    expect(spy).toBeCalledTimes(2)
+
+    unwatch()
+
+    count_a.value++
+    expect(spy).toBeCalledTimes(2)
+
+    count_a.value++
     expect(spy).toBeCalledTimes(2)
   })
 })
