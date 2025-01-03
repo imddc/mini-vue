@@ -70,22 +70,23 @@ function doWatch(source, cb, options) {
     // 每次值变化, 运行job
     // 拿到最新的值并调用回调函数将参数填充
     if (cb) {
-      // [ ] todo: 这里应该有问题
-      if (immediate) {
-        job()
-      } else {
-        const newValue = _effect.run()
-        console.log('in watch =>', newValue, oldValue)
-        if (cleanup) {
-          cleanup()
-        }
-        cb(newValue, oldValue, onCleanup)
-        oldValue = newValue
+      const newValue = _effect.run()
+      if (cleanup) {
+        cleanup()
       }
+      cb(newValue, oldValue, onCleanup)
+      oldValue = newValue
     }
   }
+
   // 先运行一次拿到结果
-  oldValue = _effect.run()
+  if (cb) {
+    if (immediate) {
+      job()
+    } else {
+      oldValue = _effect.run()
+    }
+  }
 
   // 提供停止watch
   const unwatch = () => {
