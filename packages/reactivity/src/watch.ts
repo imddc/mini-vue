@@ -1,6 +1,7 @@
 import { isFunction, isObject } from '@mini-vue/shared'
 import { ReactiveEffect } from './effect'
 import { isReactive } from './reactive'
+import { isRef } from './ref'
 
 /**
  * source 只能为getter,reactive,ref, 或以上的数组
@@ -45,7 +46,15 @@ function doWatch(source, cb, options) {
     return traverse(source, _depth)
   }
 
-  const getter = () => reactiveGetter(source)
+  let getter
+  if (isReactive(source)) {
+    getter = () => reactiveGetter(source)
+  } else if (isRef(source)) {
+    getter = () => source.value
+  } else if (isFunction(source)) {
+    getter = source
+  }
+
   const _effect = new ReactiveEffect(getter, job)
 
   let cleanup

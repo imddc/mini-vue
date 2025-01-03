@@ -17,24 +17,22 @@ describe('watch', () => {
     expect(spy).toHaveBeenCalledTimes(1)
   })
 
-  // it('should test watch ref', () => {
-  //   const spy = vi.fn(v => v)
-  //
-  //   const count = ref(1)
-  //
-  //   let value, oldValue
-  //   watch(count, (v, oldV) => {
-  //     spy(v)
-  //     value = v
-  //     oldValue = oldV
-  //   })
-  //   expect(spy).toHaveBeenCalledTimes(0)
-  //   expect(value).toMatchInlineSnapshot(`undefined`)
-  //   expect(oldValue).toMatchInlineSnapshot(`undefined`)
-  //
-  //   count.value++
-  //   expect(spy).toHaveBeenCalledTimes(0)
-  //   expect(value).toMatchInlineSnapshot(`undefined`)
-  //   expect(oldValue).toMatchInlineSnapshot(`undefined`)
-  // })
+  it('should test watch ref', () => {
+    const spy = vi.fn(v => v)
+
+    const count = ref(1)
+
+    let value, oldValue
+    watch(count, (v, oldV) => {
+      spy(v)
+      value = v
+      oldValue = oldV
+    })
+    expect(spy).toHaveBeenCalledTimes(0)
+
+    count.value++
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(value).toBe(2)
+    expect(oldValue).toBe(1)
+  })
 })
