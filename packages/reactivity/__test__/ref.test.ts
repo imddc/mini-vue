@@ -32,12 +32,14 @@ describe('ref', () => {
     expect(state_2.value.a).toBe(1)
   })
 
-  it('should test effect', () => {
+  it('should test branch switch', () => {
     const spy = vi.fn(v => v)
     const flag = ref(true)
+    const a = ref(1)
+    const b = ref(2)
 
     effect(() => {
-      spy(flag.value)
+      spy(flag.value ? a.value : b.value)
     })
     expect(spy).toBeCalledTimes(1)
 
