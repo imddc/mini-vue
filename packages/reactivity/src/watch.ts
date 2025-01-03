@@ -10,6 +10,10 @@ export function watch(source, cb, options?) {
   return doWatch(source, cb, options)
 }
 
+export function watchEffect(source, options?) {
+  return doWatch(source, null, options)
+}
+
 function traverse(source, depth?, currentDepth = 0, seen = new Set()) {
   // 得到具体的值,返回
   if (!isObject(source)) {
@@ -76,6 +80,9 @@ function doWatch(source, cb, options) {
       }
       cb(newValue, oldValue, onCleanup)
       oldValue = newValue
+    } else {
+      // watchEffect
+      _effect.run()
     }
   }
 
@@ -86,6 +93,9 @@ function doWatch(source, cb, options) {
     } else {
       oldValue = _effect.run()
     }
+  } else {
+    // 这里是watchEffect
+    _effect.run()
   }
 
   // 提供停止watch

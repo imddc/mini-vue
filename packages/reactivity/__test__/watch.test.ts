@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { reactive, ref, watch } from '../src'
+import { watchEffect } from '../src/watch'
 
 describe('watch', () => {
   it('should test watch reactive', () => {
@@ -53,5 +54,18 @@ describe('watch', () => {
     expect(spy).toBeCalledTimes(1)
     expect(value).toBe(1)
     expect(oldValue).toBe(undefined)
+  })
+
+  it('should test watchEffect', () => {
+    const spy = vi.fn(v => v)
+    const count = ref(1)
+
+    watchEffect(() => {
+      spy(count.value)
+    })
+    expect(spy).toBeCalledTimes(1)
+
+    count.value++
+    expect(spy).toBeCalledTimes(2)
   })
 })
