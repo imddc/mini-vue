@@ -9,3 +9,5 @@ export function isFunction(val: any) {
 export function hasChanged(newValue, oldValue) {
   return !Object.is(newValue, oldValue)
 }
+
+export * from './shapFlags'
