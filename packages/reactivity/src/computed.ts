@@ -37,14 +37,12 @@ class ComputedRefImpl<T> {
       () => getter(this._value),
       () => {
         triggerRefValue(this)
-        console.log('computed 依赖的值发生了变化')
       },
     )
   }
 
   get value(): T {
     if (this.effect.dirty) {
-      console.log('dirty => run effect')
       this._value = this.effect.run()
       trackRefValue(this)
     }

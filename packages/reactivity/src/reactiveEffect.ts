@@ -1,14 +1,7 @@
+import { createDep } from './dep'
 import { activeEffect, trackEffect, triggerEffects } from './effect'
 
 const targetMap = new WeakMap()
-
-export function createDep(cleanup, key) {
-  const dep = new Map() as any
-  // cleanup是对于每一个代理对象的属性来说的
-  dep.cleanup = cleanup
-  dep.name = key
-  return dep
-}
 
 export function track(target, key) {
   // 如果有activeEffect, 说明在effect之内
@@ -34,7 +27,7 @@ export function track(target, key) {
 }
 
 export function trigger(target, key, value, oldValue) {
-  console.log(value, oldValue)
+  console.log('reactive trigger =>', value, oldValue)
   const depsMap = targetMap.get(target)
   if (!depsMap) {
     return

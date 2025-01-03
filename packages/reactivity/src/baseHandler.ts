@@ -1,4 +1,4 @@
-import { isObject } from '@mini-vue/shared'
+import { hasChanged, isObject } from '@mini-vue/shared'
 import { track, trigger } from './reactiveEffect'
 import { reactive } from './reactive'
 import { ReactiveFlags } from './constants'
@@ -21,7 +21,7 @@ export const mutableHandler: ProxyHandler<any> = {
     const oldValue = target[key]
     const result = Reflect.set(target, key, value, recevier)
     // 新旧值不同则触发更新
-    if (oldValue !== value) {
+    if (hasChanged(oldValue, value)) {
       trigger(target, key, value, oldValue)
     }
     return result

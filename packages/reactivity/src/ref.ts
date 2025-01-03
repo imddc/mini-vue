@@ -1,7 +1,8 @@
+import { hasChanged } from '@mini-vue/shared'
 import { ReactiveFlags } from './constants'
+import { createDep } from './dep'
 import { activeEffect, trackEffect, triggerEffects } from './effect'
 import { toReactive } from './reactive'
-import { createDep } from './reactiveEffect'
 
 declare const RefSymbol: unique symbol
 export interface Ref<T = any, S = T> {
@@ -36,6 +37,10 @@ export function isRef(r: any): r is Ref {
   return r ? r[ReactiveFlags.IS_REF] === true : false
 }
 
+export function unRef(r) {
+  return isRef(r) ? r.value : r
+}
+
 export function proxyRefs(objectWithRef) {
   return new Proxy(objectWithRef, {
     get(target, key, reveiver) {
@@ -61,29 +66,37 @@ function createRef(rawValue) {
   return new RefImpl(rawValue)
 }
 
-export function trackRefValue(ref) {
+export function trackRefValue(_ref) {
   if (activeEffect) {
+    const dep = _ref.dep
+    if (!dep) { // 初始化一个dep, 携带了name和cleanup
+      _ref.dep = createDep(
+        () => (_ref.dep = undefined),
+        undefined,
+      )
+    }
+
     trackEffect(
       activeEffect,
-      (ref.dep = createDep(() => (ref.dep = undefined), 'undefined')),
+      _ref.dep,
     )
   }
 }
 
-export function triggerRefValue(ref) {
-  const dep = ref.dep
+export function triggerRefValue(_ref) {
+  const dep = _ref.dep
   if (dep) {
     triggerEffects(dep)
   }
 }
 
 class RefImpl {
-  private [ReactiveFlags.IS_REF] = true
+  public [ReactiveFlags.IS_REF] = true
   // 保存ref的值
-  private _value
+  public _value
   // 用于收集对应的effect,见track函数
-  private dep
-  constructor(private rawValue /* rawValue : 原始值 */) {
+  public dep
+  constructor(public rawValue) {
     // 如果传入的原始值为一个对象,则 将内部值变为原始值的reactive
     this._value = toReactive(rawValue)
   }
@@ -96,7 +109,7 @@ class RefImpl {
 
   set value(newValue) {
     // 将内部值和原始值均修改为新值
-    if (newValue !== this.rawValue) {
+    if (hasChanged(newValue, this.rawValue)) {
       this.rawValue = newValue
       this._value = newValue
       triggerRefValue(this)

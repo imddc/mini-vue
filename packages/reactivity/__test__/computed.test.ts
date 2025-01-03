@@ -16,14 +16,14 @@ describe('computed', () => {
 
     expect(c.value).toBe(3)
     expect(spy).toHaveBeenCalledTimes(1)
+
     a.value = 2
     expect(c.value).toBe(4)
     expect(spy).toHaveBeenCalledTimes(2)
-    b.value = 3
-    b.value = 5
 
+    b.value = 3
     a.value = 3
-    expect(c.value).toMatchInlineSnapshot(`4`)
-    expect(spy).toHaveBeenCalledTimes(2)
+    expect(c.value).toMatchInlineSnapshot(`6`)
+    expect(spy).toHaveBeenCalledTimes(4)
   })
 })
