@@ -40,6 +40,7 @@ function traverse(source, depth?, currentDepth = 0, seen = new Set()) {
 }
 
 function doWatch(source, cb, options) {
+  // [ ] flush: post
   const { deep, depth, immediate } = options || {}
   // 如果没有传depth, 则根据deep的值传入depth
   // 若deep为真,则认为没有传; 若deep为false,则认为depth为1
