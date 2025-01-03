@@ -10,4 +10,8 @@ export function hasChanged(newValue, oldValue) {
   return !Object.is(newValue, oldValue)
 }
 
+export function isString(val) {
+  return typeof val === 'string'
+}
+
 export * from './shapFlags'
