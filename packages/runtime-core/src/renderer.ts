@@ -1,5 +1,6 @@
 import { ShapeFlags } from '@mini-vue/shared'
 import { isSameVNode } from './createVNode'
+import { createAppAPI } from './createApp'
 
 export function createRenderer(options) {
   const {
@@ -86,6 +87,12 @@ export function createRenderer(options) {
     }
   }
 
+  // /**
+  //  * @description 比较两个儿子(数组)的差异
+  //  */
+  // function patchKeyedChildren(c1, c2, el) {
+  // }
+
   /**
    * @description 比较子节点
    */
@@ -119,6 +126,7 @@ export function createRenderer(options) {
         // 新的是数组
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // TODO: diff
+          // patchKeyedChildren(c1, c2, el)
         } else {
           unmountChildren(c1)
         }
@@ -178,5 +186,6 @@ export function createRenderer(options) {
 
   return {
     render,
+    createApp: createAppAPI(render),
   }
 }
