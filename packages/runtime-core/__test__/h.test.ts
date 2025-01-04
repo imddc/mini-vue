@@ -21,7 +21,7 @@ describe('h', () => {
         children: 'p text',
         el: null,
         key: undefined,
-        props: null,
+        props: {},
         shapeFlag: 9,
         type: 'a',
       },

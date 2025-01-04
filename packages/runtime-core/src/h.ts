@@ -1,9 +1,5 @@
 import { isObject } from '@mini-vue/shared'
-import { createVNode } from './createVNode'
-
-export function isVNode(val) {
-  return val && val.__v_isVNode
-}
+import { createVNode, isVNode } from './createVNode'
 
 export function h(type, propsOrChildren, children?) {
   const l = arguments.length
