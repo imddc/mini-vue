@@ -9,14 +9,26 @@ export function createRenderer(options) {
     patchProp: hostPatchProp,
     createElement: hostCreateElement,
     // createText: hostCreateText,
-    setText: hostSetText,
+    // setText: hostSetText,
     setElementText: hostSetElementText,
     // parentNode: hostParentNode,
     // nextSibling: hostNextSibling,
   } = options
 
+  /**
+   * @description 卸载元素
+   */
   function unmount(vnode) {
     hostRemove(vnode.el)
+  }
+
+  /**
+   * @description 全量卸载子节点
+   */
+  function unmountChildren(children) {
+    for (let i = 0; i < children.length; i++) {
+      unmount(children[i])
+    }
   }
 
   /**
@@ -33,7 +45,7 @@ export function createRenderer(options) {
     }
 
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      hostSetText(el, vnode.children)
+      hostSetElementText(el, vnode.children)
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(vnode.children, el)
     }
@@ -50,6 +62,9 @@ export function createRenderer(options) {
     }
   }
 
+  /**
+   * @description 比较元素
+   */
   function patchElement(n1, n2) {
     // 1. 比较元素差异 对dom元素复用
     // 2. 比较属性和元素的子节点
@@ -59,39 +74,8 @@ export function createRenderer(options) {
     const newProps = n2.props || {}
 
     patchProps(oldProps, newProps, el)
-
     patchChildren(n1, n2, el)
   }
-
-  /**
-   * @description 比较元素的props
-   */
-  function patchProps(oldProps, newProps, el) {
-    // 将新的属性添加到el
-    for (const key in newProps) {
-      hostPatchProp(el, key, oldProps[key], newProps[key])
-    }
-
-    // 从老的属性中删除新属性中不存在的
-    for (const key in oldProps) {
-      if (!(key in newProps)) {
-        hostPatchProp(el, key, oldProps[key], null)
-      }
-    }
-  }
-
-  // 全量卸载子节点
-  function unmountChildren(children) {
-    for (let i = 0; i < children.length; i++) {
-      unmount(children[i])
-    }
-  }
-
-  // /**
-  //  * @description 比较两个儿子(数组)的差异
-  //  */
-  // function patchKeyedChildren(c1, c2, el) {
-  // }
 
   /**
    * @description 比较子节点
@@ -110,46 +94,73 @@ export function createRenderer(options) {
     // 5.老的是文本，新的是空
     // 6.老的是文本，新的是数组
 
-    // 新的是文本
-    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    // 老的是null
+    if (c1 == null) {
+      // 新的是数组, 挂载
+      if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        mountChildren(c2, el)
+        // 新的是文本or null
+      } else {
+        // 加一层判断, 为null则不进行操作
+        if (c1 !== c2) {
+          hostSetElementText(el, c2)
+        }
+      }
       // 老的是数组
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    } else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      // 新的是数组
+      if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        patchKeyedChildren(c1, c2, el)
+      } else {
         unmountChildren(c1)
+        if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          hostSetElementText(el, c2)
+        }
       }
       // 老的是文本
-      if (c1 !== c2) {
+    } else if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(el, c2)
-      }
-    } else {
-      // 老的是数组
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // 新的是数组
-        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          // TODO: diff
-          // patchKeyedChildren(c1, c2, el)
-        } else {
-          unmountChildren(c1)
-        }
+      } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        hostSetElementText(el, '')
+        mountChildren(c2, el)
       } else {
-        // 老的是文本
-        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-          //  新的是数组
-          if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-            mountChildren(c2, el)
-          } else {
-            // 新的是空
-            hostSetElementText(el, '')
-          }
-        }
+        hostSetElementText(el, '')
       }
     }
+  }
+  // }
+
+  /**
+   * @description 比较元素的props
+   */
+  function patchProps(oldProps, newProps, el) {
+    // 将新的属性添加到el
+    for (const key in newProps) {
+      hostPatchProp(el, key, oldProps[key], newProps[key])
+    }
+
+    // 从老的属性中删除新属性中不存在的
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        hostPatchProp(el, key, oldProps[key], null)
+      }
+    }
+  }
+
+  /**
+   * @description 比较两个儿子(数组)的差异
+   * TODO: diff
+   */
+  function patchKeyedChildren(c1, c2, el) {
+    console.log('start diff =>', c1, c2, el)
   }
 
   /**
    * @description 对元素处理
    */
   function processElement(n1, n2, container) {
-    if (n1 === null) {
+    if (n1 == null) {
       mountElement(n2, container)
     } else {
       // diff

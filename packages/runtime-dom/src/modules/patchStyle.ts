@@ -8,7 +8,7 @@ export default function patchStyle(el, prev, next) {
   if (prev) {
     for (const key in prev) {
       // 老的有新的没有删除
-      if (next[key] == null) {
+      if (next?.[key] == null) {
         style[key] = null
       }
     }

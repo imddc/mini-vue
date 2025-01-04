@@ -7,6 +7,8 @@
   },
   "dependencies": {
     "@mini-vue/reactivity": "workspace:^",
+    "@mini-vue/runtime-core": "workspace:^",
+    "@mini-vue/runtime-dom": "workspace:^",
     "vue": "^3.5.13"
   },
   "devDependencies": {
