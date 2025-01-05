@@ -227,8 +227,34 @@ export function createRenderer(options) {
         // 不存在
         if (newIndex == null) {
           unmount(vnode)
+        } else {
+          // 存在则将相同key的vnode复用
+          patch(vnode, c2[newIndex], container)
         }
       }
+
+      console.log('更新后的vnode => ', c2)
+      // 调整顺序
+      // e2 => 新队列的终止位置 s2 => 新队列的起始位置
+      // eg: e2 = 4 s2 = 2 共三个节点 故 4-2+1 = 3 , 索引为 0 1 2
+      const toBePatched = e2 - s2 + 1
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        // 2 1 0
+        const newIndex = s2 + i
+        // 锚点为 要插入位置的下一个元素
+        const anchor = c2[newIndex + 1]?.el
+        const vnode = c2[newIndex]
+
+        // 要新增的vnode不存在对应的el
+        if (!vnode.el) {
+          patch(null, vnode, container, anchor) // 创建h插入
+        } else {
+          // 倒序插入
+          hostInsert(vnode.el, container, anchor)
+        }
+      }
+
+      console.log('调整顺序后的vnode => ', c2)
     }
   }
 

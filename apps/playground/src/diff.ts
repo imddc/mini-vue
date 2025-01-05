@@ -86,30 +86,30 @@ const renderType = [
     name: 'unknown sequence',
     init: () => {
       render(h('div', [
-        h('a', { key: 'a' }, 'a '),
-        h('a', { key: 'b' }, 'b '),
+        h('a', { key: 'a' }, 'a-0 '),
+        h('a', { key: 'b' }, 'b-1 '),
         // --
-        h('a', { key: 'c' }, 'c '),
-        h('a', { key: 'd' }, 'd '),
-        h('a', { key: 'e' }, 'e '),
-        h('a', { key: 'z' }, 'z '),
+        h('a', { key: 'c' }, 'c-2 '),
+        h('a', { key: 'd' }, 'd-3 '),
+        h('a', { key: 'e' }, 'e-4 '),
+        h('a', { key: 'z' }, 'z-5 '),
         // --
-        h('a', { key: 'f' }, 'f '),
-        h('a', { key: 'g' }, 'g '),
+        h('a', { key: 'f' }, 'f-6 '),
+        h('a', { key: 'g' }, 'g-7 '),
       ]), appEl)
     },
     change: () => {
       render(h('div', [
-        h('a', { key: 'a' }, 'a '),
-        h('a', { key: 'b' }, 'b '),
+        h('a', { key: 'a' }, 'a-0 '),
+        h('a', { key: 'b' }, 'b-1 '),
         // --
-        h('a', { key: 'e' }, 'e '),
-        h('a', { key: 'c' }, 'c '),
-        h('a', { key: 'd' }, 'd '),
-        h('a', { key: 'h' }, 'h '),
+        h('a', { key: 'e', style: { color: 'blue' } }, 'e-2 '),
+        h('a', { key: 'c' }, 'c-3 '),
+        h('a', { key: 'd' }, 'd-4 '),
+        h('a', { key: 'h' }, 'h-5 '),
         // --
-        h('a', { key: 'f' }, 'f '),
-        h('a', { key: 'g' }, 'g '),
+        h('a', { key: 'f' }, 'f-6 '),
+        h('a', { key: 'g' }, 'g-7 '),
       ]), appEl)
     },
   },
