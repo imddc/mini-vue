@@ -113,6 +113,37 @@ const renderType = [
       ]), appEl)
     },
   },
+
+  {
+    name: 'lis change',
+    init: () => {
+      render(h('div', [
+        h('a', { key: 'a' }, 'a '),
+        h('a', { key: 'b' }, 'b '),
+        // --
+        h('a', { key: 'c' }, 'c '),
+        h('a', { key: 'd' }, 'd '),
+        h('a', { key: 'e' }, 'e '),
+        // --
+        h('a', { key: 'f' }, 'f '),
+        h('a', { key: 'g' }, 'g '),
+      ]), appEl)
+    },
+    change: () => {
+      render(h('div', [
+        h('a', { key: 'a' }, 'a '),
+        h('a', { key: 'b' }, 'b '),
+        // --
+        h('a', { key: 'e' }, 'e '),
+        h('a', { key: 'c' }, 'c '),
+        h('a', { key: 'd' }, 'd '),
+        h('a', { key: 'z' }, 'z '),
+        // --
+        h('a', { key: 'f' }, 'f '),
+        h('a', { key: 'g' }, 'g '),
+      ]), appEl)
+    },
+  },
 ]
 
 render(h('div', renderType.map(i => h('button', { 'data-type': i.name }, i.name))), btnWrapperEl)

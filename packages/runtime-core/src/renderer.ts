@@ -1,6 +1,7 @@
 import { ShapeFlags } from '@mini-vue/shared'
 import { isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
+import { getLIS } from './lis'
 
 export function createRenderer(options) {
   const {
@@ -205,18 +206,24 @@ export function createRenderer(options) {
         }
       }
     } else {
+      // unknown sequence
       const s1 = i
       const s2 = i
 
       // 用于快速查找, 看老的是否在新的里面还有, 没有则删除, 有则更新
       const keyToNewIndexMap = new Map()
 
+      // e2 => 新队列的终止位置 s2 => 新队列的起始位置
+      // eg: e2 = 4 s2 = 2 共三个节点 故 4-2+1 = 3 , 索引为 0 1 2
+      const toBePatched = e2 - s2 + 1
+      //
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0)
+
       // 新的
       for (let i = s2; i <= e2; i++) {
         const vnode = c2[i]
         keyToNewIndexMap.set(vnode.key, i)
       }
-      console.log(keyToNewIndexMap)
 
       // 旧的
       for (let i = s1; i <= e1; i++) {
@@ -224,20 +231,23 @@ export function createRenderer(options) {
         // 获取旧vnode.key 在新的中的索引
         const newIndex = keyToNewIndexMap.get(vnode.key)
 
-        // 不存在
+        // 在新的中不存在
         if (newIndex == null) {
           unmount(vnode)
         } else {
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
           // 存在则将相同key的vnode复用
           patch(vnode, c2[newIndex], container)
         }
       }
 
-      console.log('更新后的vnode => ', c2)
+      const lis = getLIS(newIndexToOldIndexMap)
+      console.log('newIndexToOldIndexMap => ', newIndexToOldIndexMap)
+      console.log('lis => ', lis)
+
+      let j = lis.length - 1
+
       // 调整顺序
-      // e2 => 新队列的终止位置 s2 => 新队列的起始位置
-      // eg: e2 = 4 s2 = 2 共三个节点 故 4-2+1 = 3 , 索引为 0 1 2
-      const toBePatched = e2 - s2 + 1
       for (let i = toBePatched - 1; i >= 0; i--) {
         // 2 1 0
         const newIndex = s2 + i
@@ -249,12 +259,14 @@ export function createRenderer(options) {
         if (!vnode.el) {
           patch(null, vnode, container, anchor) // 创建h插入
         } else {
-          // 倒序插入
-          hostInsert(vnode.el, container, anchor)
+          if (i === lis[j]) {
+            j--
+          } else {
+            // 倒序插入
+            hostInsert(vnode.el, container, anchor)
+          }
         }
       }
-
-      console.log('调整顺序后的vnode => ', c2)
     }
   }
 
