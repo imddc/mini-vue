@@ -151,7 +151,8 @@ export function createRenderer(options) {
 
   /**
    * @description 比较两个儿子(数组)的差异
-   * TODO: diff
+   * 全量diff完成
+   * TODO: 快速diff in 模板编译阶段 标记动态节点
    */
   function patchKeyedChildren(c1, c2, container) {
     let i = 0
