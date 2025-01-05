@@ -66,6 +66,53 @@ const renderType = [
       ]), appEl)
     },
   },
+  {
+    name: 'remove-node',
+    init: () => {
+      render(h('div', [
+        h('a', { key: 'a' }, 'a-a '),
+        h('a', { key: 'b' }, 'a-b '),
+        h('a', { key: 'c' }, 'a-c '),
+      ]), appEl)
+    },
+    change: () => {
+      render(h('div', [
+        h('a', { key: 'a', style: { color: 'red' } }, 'a-a '),
+        h('a', { key: 'b' }, 'a-b '),
+      ]), appEl)
+    },
+  },
+  {
+    name: 'unknown sequence',
+    init: () => {
+      render(h('div', [
+        h('a', { key: 'a' }, 'a '),
+        h('a', { key: 'b' }, 'b '),
+        // --
+        h('a', { key: 'c' }, 'c '),
+        h('a', { key: 'd' }, 'd '),
+        h('a', { key: 'e' }, 'e '),
+        h('a', { key: 'z' }, 'z '),
+        // --
+        h('a', { key: 'f' }, 'f '),
+        h('a', { key: 'g' }, 'g '),
+      ]), appEl)
+    },
+    change: () => {
+      render(h('div', [
+        h('a', { key: 'a' }, 'a '),
+        h('a', { key: 'b' }, 'b '),
+        // --
+        h('a', { key: 'e' }, 'e '),
+        h('a', { key: 'c' }, 'c '),
+        h('a', { key: 'd' }, 'd '),
+        h('a', { key: 'h' }, 'h '),
+        // --
+        h('a', { key: 'f' }, 'f '),
+        h('a', { key: 'g' }, 'g '),
+      ]), appEl)
+    },
+  },
 ]
 
 render(h('div', renderType.map(i => h('button', { 'data-type': i.name }, i.name))), btnWrapperEl)

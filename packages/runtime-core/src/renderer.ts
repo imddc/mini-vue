@@ -196,6 +196,39 @@ export function createRenderer(options) {
           i++
         }
       }
+      // 移除节点
+    } else if (i > e2) {
+      if (i <= e1) {
+        while (i <= e1) {
+          unmount(c1[i])
+          i++
+        }
+      }
+    } else {
+      const s1 = i
+      const s2 = i
+
+      // 用于快速查找, 看老的是否在新的里面还有, 没有则删除, 有则更新
+      const keyToNewIndexMap = new Map()
+
+      // 新的
+      for (let i = s2; i <= e2; i++) {
+        const vnode = c2[i]
+        keyToNewIndexMap.set(vnode.key, i)
+      }
+      console.log(keyToNewIndexMap)
+
+      // 旧的
+      for (let i = s1; i <= e1; i++) {
+        const vnode = c1[i]
+        // 获取旧vnode.key 在新的中的索引
+        const newIndex = keyToNewIndexMap.get(vnode.key)
+
+        // 不存在
+        if (newIndex == null) {
+          unmount(vnode)
+        }
+      }
     }
   }
 
