@@ -1,5 +1,5 @@
 import { ShapeFlags } from '@mini-vue/shared'
-import { isSameVNode } from './createVNode'
+import { isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 
 export function createRenderer(options) {
@@ -34,7 +34,7 @@ export function createRenderer(options) {
   /**
    * @description 挂载元素
    */
-  function mountElement(vnode, container) {
+  function mountElement(vnode, container, anchor) {
     const { type, props, shapeFlag } = vnode
     const el = vnode.el = hostCreateElement(type)
 
@@ -50,7 +50,7 @@ export function createRenderer(options) {
       mountChildren(vnode.children, el)
     }
 
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   /**
@@ -152,16 +152,59 @@ export function createRenderer(options) {
    * @description 比较两个儿子(数组)的差异
    * TODO: diff
    */
-  function patchKeyedChildren(c1, c2, el) {
-    console.log('start diff =>', c1, c2, el)
+  function patchKeyedChildren(c1, c2, container) {
+    let i = 0
+    const l2 = c2.length
+    let e1 = c1.length - 1
+    let e2 = l2 - 1
+    // 1. 从头比
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      } else {
+        break
+      }
+      i++
+    }
+
+    console.log('from start => ', i, e1, e2)
+
+    // 2. 从尾比
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1]
+      const n2 = c2[e2]
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      } else {
+        break
+      }
+      e1--
+      e2--
+    }
+    console.log('from end => ', i, e1, e2)
+
+    if (i > e1) {
+      // 新增节点
+      if (i <= e2) {
+        // 这个节点就是
+        const nextPos = e2 + 1
+        const anchor = c2[nextPos]?.el
+        while (i <= e2) {
+          patch(null, c2[i], container, anchor)
+          i++
+        }
+      }
+    }
   }
 
   /**
    * @description 对元素处理
    */
-  function processElement(n1, n2, container) {
+  function processElement(n1, n2, container, anchor) {
     if (n1 == null) {
-      mountElement(n2, container)
+      mountElement(n2, container, anchor)
     } else {
       // diff
       patchElement(n1, n2)
@@ -169,18 +212,18 @@ export function createRenderer(options) {
   }
 
   // 初始化和diff算法
-  function patch(n1, n2, container) {
+  function patch(n1, n2, container, anchor = null) {
     if (n1 === n2) {
       return
     }
 
     // 移除老的dom
-    if (n1 && !isSameVNode(n1, n2)) {
+    if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1)
       n1 = null
     }
 
-    processElement(n1, n2, container)
+    processElement(n1, n2, container, anchor)
   }
 
   function render(vnode, container) {

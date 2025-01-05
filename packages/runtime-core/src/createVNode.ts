@@ -4,7 +4,7 @@ export function isVNode(val) {
   return val && val.__v_isVNode
 }
 
-export function isSameVNode(n1, n2) {
+export function isSameVNodeType(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key
 }
 

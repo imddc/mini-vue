@@ -1,6 +1,5 @@
 import { render } from '@mini-vue/runtime-dom'
 import { h } from '@mini-vue/runtime-core'
-import { effect, ref } from '@mini-vue/reactivity'
 
 const appEl = document.querySelector('#app')!
 const btnWrapperEl = document.querySelector('.btn-wrapper')!
@@ -113,8 +112,3 @@ btnWrapperEl.addEventListener('click', (e) => {
   addBtn(`${renderObj.name}-change`, renderObj.change)
   renderObj?.init?.()
 })
-
-// render(h('div', {}, '11'), appEl)
-// setTimeout(() => {
-//   render(h('div', {}, [h('h1', 'a 1'), h('h2', 'a 2')]), appEl)
-// }, 1000)
