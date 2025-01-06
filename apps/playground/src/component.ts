@@ -17,13 +17,14 @@ const Component = {
   data() {
     return {
       value: 1,
-      text: 2,
+      text: 'hello',
     }
   },
   render(proxy) {
     setTimeout(() => {
       this.value++
-    }, 1000)
+      this.text += 'world'
+    }, 500)
 
     return h(Fragment, [
       h(Text, `value is => ${proxy.value}`),
@@ -38,7 +39,6 @@ const renderType = [
     type: 'text',
     init: () => {
       render(h(Component, {}), appEl)
-      console.dir(appEl)
     },
     change: () => {
       render(h(

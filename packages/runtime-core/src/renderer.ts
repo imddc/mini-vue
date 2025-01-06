@@ -3,6 +3,7 @@ import { ReactiveEffect, reactive } from '@mini-vue/reactivity'
 import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
+import { queueJob } from './scheduler'
 
 export function createRenderer(options) {
   const {
@@ -344,7 +345,7 @@ export function createRenderer(options) {
       // state更新的逻辑
 
       // eslint-disable-next-line  ts/no-use-before-define
-      update()
+      queueJob(update)
     })
 
     const update = (instance.update = () => effect.run())
