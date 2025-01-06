@@ -311,6 +311,16 @@ export function createRenderer(options) {
   }
 
   /**
+   * @description 预更新组件
+   */
+  function updateComponentPreRender(instance, nextVNode) {
+    instance.next = null
+    instance.vnode = nextVNode
+
+    updateProps(instance, instance.props, nextVNode.props)
+  }
+
+  /**
    * @description 创建组件的渲染effect
    * 也就是render
    */
@@ -327,6 +337,14 @@ export function createRenderer(options) {
         instance.subTree = subTree
       } else {
         // 更新
+        const { next } = instance
+        if (next) {
+          // 更新属性和插槽
+          updateComponentPreRender(instance, next)
+          // slots, props
+        }
+
+        // 基于状态的更新
         const subTree = render.call(instance.proxy, instance.proxy)
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
@@ -361,15 +379,15 @@ export function createRenderer(options) {
   /**
    * @description 判断vnode的props是否发生了变化
    */
-  function hasPropsChange(prev, next) {
-    const nKeys = Object.keys(next)
+  function hasPropsChange(prevProps, nextProps) {
+    const nKeys = Object.keys(nextProps)
     const len = nKeys.length
-    if (len !== Object.keys(prev).length) {
+    if (len !== Object.keys(prevProps).length) {
       return true
     }
     for (let i = 0; i < len; i++) {
       const key = nKeys[i]
-      if (next[key] !== prev[key]) {
+      if (nextProps[key] !== prevProps[key]) {
         return true
       }
     }
@@ -379,22 +397,35 @@ export function createRenderer(options) {
   /**
    * @description 更新组件的props
    */
-  function updateProps(instance, prev, next) {
-    // prev 和 next 均为vnode上面的props
-    if (hasPropsChange(prev, next)) {
+  function updateProps(instance, prevProps, nextProps) {
+    // prevProps 和 nextProps 均为vnode上面的props
+    if (hasPropsChange(prevProps, nextProps)) {
       // 将所有新的propx添加到instance的props中
-      for (const key in next) {
-        instance.props[key] = next[key]
+      for (const key in nextProps) {
+        instance.props[key] = nextProps[key]
       }
       // 将原instance的props中有但新props中没有的属性删除
       for (const key in instance.props) {
-        if (!(key in next)) {
+        if (!(key in nextProps)) {
           delete instance.props[key]
         }
       }
     }
+  }
 
-    console.log(instance)
+  function shouldComponentUpdate(n1, n2) {
+    const { props: prevProps, children: prevChildren } = n1
+    const { props: nextProps, children: nextChildren } = n2
+
+    // 插槽存在 则更新
+    if (prevChildren || nextChildren) {
+      return true
+    }
+    // 如果属性不一致,则更新
+    if (prevProps === nextProps) {
+      return false
+    }
+    return hasPropsChange(prevProps, nextProps)
   }
 
   /**
@@ -403,9 +434,13 @@ export function createRenderer(options) {
   function updateComponent(n1, n2) {
     // 复用组件实例
     const instance = (n2.component = n1.component)
-    const { props: prevProps } = n1
-    const { props: nextProps } = n2
-    updateProps(instance, prevProps, nextProps)
+
+    // 更新逻辑统一
+    if (shouldComponentUpdate(n1, n2)) {
+      // 如果调用update时, next存在, 则说明是属性更新,插槽更新
+      instance.next = n2
+      instance.update()
+    }
   }
 
   /**
