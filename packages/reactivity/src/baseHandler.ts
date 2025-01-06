@@ -22,7 +22,7 @@ export const mutableHandler: ProxyHandler<any> = {
     const result = Reflect.set(target, key, value, recevier)
     // 新旧值不同则触发更新
     if (hasChanged(oldValue, value)) {
-      trigger(target, key, value, oldValue)
+      trigger(target, key)
     }
     return result
   },

@@ -26,8 +26,7 @@ export function track(target, key) {
   }
 }
 
-export function trigger(target, key, value, oldValue) {
-  console.log('reactive trigger =>', value, oldValue)
+export function trigger(target, key) {
   const depsMap = targetMap.get(target)
   if (!depsMap) {
     return
