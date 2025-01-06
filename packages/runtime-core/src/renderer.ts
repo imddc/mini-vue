@@ -1,4 +1,5 @@
 import { ShapeFlags } from '@mini-vue/shared'
+import { ReactiveEffect, reactive } from '@mini-vue/reactivity'
 import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
@@ -307,6 +308,63 @@ export function createRenderer(options) {
     }
   }
 
+  /**
+   * @description 组件挂载
+   */
+  function mountComponent(n1, n2, container, anchor) {
+    const { data = () => { }, render } = n2.type
+
+    const state = reactive(data())
+
+    const instance = {
+      state, // 状态
+      vnode: n2, // 组件的虚拟节点
+      subTree: null, // 子树
+      isMountd: false, // 是否挂载完成
+      update: null as unknown as () => void, // 组件的更新函数
+    }
+
+    const componentUpdateFn = () => {
+      if (!instance.isMountd) {
+        // 挂载
+        // render 执行会返回一个vnode 相当于组件内部的vnode
+        const subTree = render.call(state, state)
+        patch(null, subTree, container, anchor)
+        instance.isMountd = true
+        instance.subTree = subTree
+      } else {
+        // 更新
+        const subTree = render.call(state, state)
+        patch(instance.subTree, subTree, container, anchor)
+        instance.subTree = subTree
+      }
+    }
+
+    const effect = new ReactiveEffect(componentUpdateFn, () => {
+      // state更新的逻辑
+
+      // eslint-disable-next-line  ts/no-use-before-define
+      update()
+    })
+
+    const update = (instance.update = () => effect.run())
+    update()
+  }
+
+  /**
+   * @description 处理组件
+   */
+  function processComponent(n1, n2, container, anchor) {
+    console.log('processComponent')
+    if (n1 == null) {
+      // mount
+      mountComponent(n1, n2, container, anchor)
+    } else {
+      // patch
+
+    }
+  }
+
   // 初始化和diff算法
   function patch(n1, n2, container, anchor = null) {
     if (n1 === n2) {
@@ -319,7 +377,7 @@ export function createRenderer(options) {
       n1 = null
     }
 
-    const { type } = n2
+    const { type, shapeFlag } = n2
     switch (type) {
       case Text: {
         processText(n1, n2, container)
@@ -330,7 +388,11 @@ export function createRenderer(options) {
         break
       }
       default: {
-        processElement(n1, n2, container, anchor)
+        if (shapeFlag & ShapeFlags.ELEMENT) {
+          processElement(n1, n2, container, anchor)
+        } else if (shapeFlag & ShapeFlags.COMPONENT) {
+          processComponent(n1, n2, container, anchor)
+        }
         break
       }
     }
