@@ -1,4 +1,4 @@
-import { ShapeFlags } from '@mini-vue/shared'
+import { ShapeFlags, hasOwn } from '@mini-vue/shared'
 import { ReactiveEffect, reactive } from '@mini-vue/reactivity'
 import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
@@ -330,6 +330,7 @@ export function createRenderer(options) {
       }
     }
 
+    // TODO: 这里要写成潜只读的reactive
     instance.props = reactive(props)
     instance.attrs = attrs
   }
@@ -355,6 +356,7 @@ export function createRenderer(options) {
       props: {},
       attrs: {},
       propsOptions,
+      proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
     }
 
     // 元素更新 n2.el = n1.el
@@ -366,19 +368,56 @@ export function createRenderer(options) {
     // 根据propsOptions区分props和attrs
     initProps(instance, vnode.props)
 
+    const publicProperty = {
+      $attrs: instance => instance.attrs,
+    }
+
+    instance.proxy = new Proxy(instance, {
+      get(target, key) {
+        const { state, props } = target
+
+        if (state && hasOwn(state, key)) {
+          return state[key]
+        } else if (props && hasOwn(props, key)) {
+          return props[key]
+        }
+
+        // eg: proxy.$attrs
+        const getter = publicProperty[key]
+        // v => v.attrs
+        if (getter) {
+          return getter(instance)
+        }
+      },
+      set(target, key, value) {
+        const { state, props } = target
+
+        if (state && hasOwn(state, key)) {
+          state[key] = value
+        } else if (props && hasOwn(props, key)) {
+          // TODO: 浅只读修改之后,这里的逻辑直接删掉即可, 在浅只读那边已经有了提示
+          // 不过可以做区分 set props和set reative
+          // props[key] = value
+          console.warn('props are readonly')
+          return false
+        }
+        return true
+      },
+    })
+
     console.log('instance => ', instance)
 
     const componentUpdateFn = () => {
       if (!instance.isMountd) {
         // 挂载
         // render 执行会返回一个vnode 相当于组件内部的vnode
-        const subTree = render.call(state, state)
+        const subTree = render.call(instance.proxy, instance.proxy)
         patch(null, subTree, container, anchor)
         instance.isMountd = true
         instance.subTree = subTree
       } else {
         // 更新
-        const subTree = render.call(state, state)
+        const subTree = render.call(instance.proxy, instance.proxy)
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
       }

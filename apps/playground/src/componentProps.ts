@@ -8,10 +8,12 @@ const Component = {
     name: String,
     age: Number,
   },
-  render() {
+  render(proxy) {
     return h(Fragment, [
-      h(Text, `name is => ${this.name}`),
-      h('div', `value is => ${this.age}`),
+      h(Text, `props name is => ${proxy.name}`),
+      h('div', `props value is => ${proxy.age}`),
+      h('div', `arrts a is => ${proxy.$attrs.a}`),
+      h('div', `arrts b is => ${proxy.$attrs.b}`),
     ])
   },
 }

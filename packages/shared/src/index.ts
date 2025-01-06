@@ -14,4 +14,8 @@ export function isString(val) {
   return typeof val === 'string'
 }
 
+export const hasOwnProperty = Object.prototype.hasOwnProperty
+
+export const hasOwn = (target, key) => hasOwnProperty.call(target, key)
+
 export * from './shapFlags'
