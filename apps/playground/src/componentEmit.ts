@@ -16,7 +16,8 @@ const Component = {
   },
   render(proxy) {
     return h(Fragment, [
-      h('button', { onClick: proxy.handleClick }, 'click me'),
+      h('button', { onClick: proxy.handleClick }, 'click me use emit'),
+      h('button', { onClick: () => proxy.$emit('clicked') }, 'click me use $emit'),
     ])
   },
 }

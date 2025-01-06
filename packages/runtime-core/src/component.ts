@@ -90,6 +90,10 @@ const instanceProxyHandler = {
   get(target, key) {
     const { data, props, setupState } = target
 
+    if (key === '$emit') {
+      return createEmit(target)
+    }
+
     if (data && hasOwn(data, key)) {
       return data[key]
     } else if (props && hasOwn(props, key)) {
@@ -195,6 +199,16 @@ export function initSlots(instance, children) {
   }
 }
 
+function createEmit(instance) {
+  return (event: string, ...payload: any[]) => {
+    const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
+    const handler = instance.vnode.props[eventName]
+    if (handler) {
+      handler(...payload)
+    }
+  }
+}
+
 /**
  * @description 启动组件
  */
@@ -222,13 +236,7 @@ export function setupComponent(instance) {
       expose(value) {
         instance.exposed = value
       },
-      emit(event: string, ...payload: any[]) {
-        const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
-        const handler = instance.vnode.props[eventName]
-        if (handler) {
-          handler(...payload)
-        }
-      },
+      emit: createEmit(instance),
     }
 
     // 如果setup函数没有return 则报错 vue源码中也是如此
