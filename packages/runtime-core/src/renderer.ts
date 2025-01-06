@@ -343,6 +343,7 @@ export function createRenderer(options) {
     const update = (instance.update = () => effect.run())
     update()
   }
+
   /**
    * @description 组件挂载
    */
@@ -358,6 +359,56 @@ export function createRenderer(options) {
   }
 
   /**
+   * @description 判断vnode的props是否发生了变化
+   */
+  function hasPropsChange(prev, next) {
+    const nKeys = Object.keys(next)
+    const len = nKeys.length
+    if (len !== Object.keys(prev).length) {
+      return true
+    }
+    for (let i = 0; i < len; i++) {
+      const key = nKeys[i]
+      if (next[key] !== prev[key]) {
+        return true
+      }
+    }
+    return false
+  }
+
+  /**
+   * @description 更新组件的props
+   */
+  function updateProps(instance, prev, next) {
+    // prev 和 next 均为vnode上面的props
+    if (hasPropsChange(prev, next)) {
+      // 将所有新的propx添加到instance的props中
+      for (const key in next) {
+        instance.props[key] = next[key]
+      }
+      // 将原instance的props中有但新props中没有的属性删除
+      for (const key in instance.props) {
+        if (!(key in next)) {
+          delete instance.props[key]
+        }
+      }
+    }
+
+    console.log(instance)
+  }
+
+  /**
+   * @description 组件更新
+   */
+  function updateComponent(n1, n2) {
+    // 复用组件实例
+    const instance = (n2.component = n1.component)
+    const { props: prevProps } = n1
+    const { props: nextProps } = n2
+    updateProps(instance, prevProps, nextProps)
+  }
+
+  /**
    * @description 处理组件
    */
   function processComponent(n1, n2, container, anchor) {
@@ -366,7 +417,7 @@ export function createRenderer(options) {
       mountComponent(n2, container, anchor)
     } else {
       // patch
-
+      updateComponent(n1, n2)
     }
   }
 
