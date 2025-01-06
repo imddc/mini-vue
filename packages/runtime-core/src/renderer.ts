@@ -310,20 +310,63 @@ export function createRenderer(options) {
   }
 
   /**
+   * @description 区分props和
+   */
+  function initProps(instance, rawProps) {
+    const props = {}
+    const attrs = {}
+    const { propsOptions } = instance // 用于在组件中定义的
+
+    if (rawProps) {
+      for (const key in rawProps) {
+        const value = rawProps[key]
+
+        // 说明是组件中的属性
+        if (key in propsOptions) {
+          props[key] = value
+        } else {
+          attrs[key] = value
+        }
+      }
+    }
+
+    instance.props = reactive(props)
+    instance.attrs = attrs
+  }
+
+  /**
    * @description 组件挂载
    */
-  function mountComponent(n1, n2, container, anchor) {
-    const { data = () => { }, render } = n2.type
+  function mountComponent(vnode, container, anchor) {
+    const {
+      data = () => ({}),
+      render,
+      props: propsOptions = {},
+    } = vnode.type
 
     const state = reactive(data())
 
     const instance = {
       state, // 状态
-      vnode: n2, // 组件的虚拟节点
+      vnode, // 组件的虚拟节点
       subTree: null, // 子树
       isMountd: false, // 是否挂载完成
       update: null as unknown as () => void, // 组件的更新函数
+      props: {},
+      attrs: {},
+      propsOptions,
     }
+
+    // 元素更新 n2.el = n1.el
+    // 组件更新 n2.subTree.el = n1.subTree.el
+    vnode.component = instance
+    // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
+    // 直接复用component即可
+
+    // 根据propsOptions区分props和attrs
+    initProps(instance, vnode.props)
+
+    console.log('instance => ', instance)
 
     const componentUpdateFn = () => {
       if (!instance.isMountd) {
@@ -356,10 +399,9 @@ export function createRenderer(options) {
    * @description 处理组件
    */
   function processComponent(n1, n2, container, anchor) {
-    console.log('processComponent')
     if (n1 == null) {
       // mount
-      mountComponent(n1, n2, container, anchor)
+      mountComponent(n2, container, anchor)
     } else {
       // patch
 
