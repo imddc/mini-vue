@@ -1,6 +1,7 @@
 import { ShapeFlags, isString } from '@mini-vue/shared'
 
 export const Text = Symbol('Text')
+export const Fragment = Symbol('Fragment')
 
 export function isVNode(val) {
   return val && val.__v_isVNode

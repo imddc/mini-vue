@@ -1,5 +1,5 @@
 import { render } from '@mini-vue/runtime-dom'
-import { Text, h } from '@mini-vue/runtime-core'
+import { Fragment, Text, h } from '@mini-vue/runtime-core'
 
 const appEl = document.querySelector('#app')!
 const btnWrapperEl = document.querySelector('.btn-wrapper')!
@@ -15,20 +15,60 @@ function addBtn(value, fn) {
 
 const renderType = [
   {
-    name: 'renderText',
+    name: 'renderFragment',
     type: 'text',
     init: () => {
-      render(h(Text, {}, '112'), appEl)
+      render(null, appEl)
     },
     change: () => {
-      render(h(Text, {}, 'changed text node'), appEl)
+      render(h(Fragment, [h('div', {}, 'f1'), h('div', {}, 'f2')]), appEl)
     },
   },
   {
-    name: 'renderText2Null',
+    name: 'patchFragment',
     type: 'text',
     init: () => {
-      render(h(Text, {}, '112'), appEl)
+      render(h(Fragment, [h('div', {}, 'f1'), h('div', {}, 'f2')]), appEl)
+    },
+    change: () => {
+      render(h(Fragment, [h('div', {}, 'f3'), h('div', {}, 'f4')]), appEl)
+    },
+  },
+  {
+    name: 'unmountFragment',
+    type: 'text',
+    init: () => {
+      render(h(Fragment, [h('div', {}, 'f1'), h('div', {}, 'f2')]), appEl)
+    },
+    change: () => {
+      render(null, appEl)
+    },
+  },
+  {
+    name: 'renderText',
+    type: 'text',
+    init: () => {
+      render(null, appEl)
+    },
+    change: () => {
+      render(h(Text, {}, 't1'), appEl)
+    },
+  },
+  {
+    name: 'patchText',
+    type: 'text',
+    init: () => {
+      render(h(Text, {}, 't1'), appEl)
+    },
+    change: () => {
+      render(h(Text, {}, 't2'), appEl)
+    },
+  },
+  {
+    name: 'unmountText',
+    type: 'text',
+    init: () => {
+      render(h(Text, {}, 't1'), appEl)
     },
     change: () => {
       render(null, appEl)
@@ -129,9 +169,7 @@ const renderType = [
 render(h('div', renderType.map(i => h('button', { 'data-type': i.name }, i.name))), btnWrapperEl)
 
 btnWrapperEl.addEventListener('click', (e) => {
-  appEl.innerHTML = ''
-  // @ts-expect-error non
-  appEl._vnode = null
+  render(null, appEl)
   changeBtnWrapper.innerHTML = ''
 
   // @ts-expect-error non

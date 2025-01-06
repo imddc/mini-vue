@@ -1,5 +1,5 @@
 import { ShapeFlags } from '@mini-vue/shared'
-import { Text, isSameVNodeType } from './createVNode'
+import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
 
@@ -20,7 +20,11 @@ export function createRenderer(options) {
    * @description 卸载元素
    */
   function unmount(vnode) {
-    hostRemove(vnode.el)
+    if (vnode.type === Fragment) {
+      unmountChildren(vnode.children)
+    } else {
+      hostRemove(vnode.el)
+    }
   }
 
   /**
@@ -292,6 +296,17 @@ export function createRenderer(options) {
     }
   }
 
+  /**
+   * @description 处理Fragment节点
+   */
+  function processFragment(n1, n2, container) {
+    if (n1 == null) {
+      mountChildren(n2.children, container)
+    } else {
+      patchChildren(n1, n2, container)
+    }
+  }
+
   // 初始化和diff算法
   function patch(n1, n2, container, anchor = null) {
     if (n1 === n2) {
@@ -308,6 +323,10 @@ export function createRenderer(options) {
     switch (type) {
       case Text: {
         processText(n1, n2, container)
+        break
+      }
+      case Fragment: {
+        processFragment(n1, n2, container)
         break
       }
       default: {
