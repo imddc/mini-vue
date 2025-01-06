@@ -1,16 +1,14 @@
-import { ShapeFlags, hasOwn } from '@mini-vue/shared'
-import { ReactiveEffect, reactive } from '@mini-vue/reactivity'
+import { ShapeFlags } from '@mini-vue/shared'
+import { ReactiveEffect } from '@mini-vue/reactivity'
 import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
 import { queueJob } from './scheduler'
 import {
   createComponentInstance,
-  hasPropsChange,
   setupComponent,
   updateComponent,
   updateComponentPreRender,
-  updateProps,
 } from './component'
 
 export function createRenderer(options) {
@@ -33,7 +31,12 @@ export function createRenderer(options) {
     if (vnode.type === Fragment) {
       unmountChildren(vnode.children)
     } else {
-      hostRemove(vnode.el)
+      // 如果是组件, 则将组件的subTree的el卸载掉
+      if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
+        hostRemove(vnode.component.subTree.el)
+      } else {
+        hostRemove(vnode.el)
+      }
     }
   }
 
