@@ -1,5 +1,5 @@
 import { render } from '@mini-vue/runtime-dom'
-import { h } from '@mini-vue/runtime-core'
+import { Text, h } from '@mini-vue/runtime-core'
 
 const appEl = document.querySelector('#app')!
 const btnWrapperEl = document.querySelector('.btn-wrapper')!
@@ -15,7 +15,28 @@ function addBtn(value, fn) {
 
 const renderType = [
   {
+    name: 'renderText',
+    type: 'text',
+    init: () => {
+      render(h(Text, {}, '112'), appEl)
+    },
+    change: () => {
+      render(h(Text, {}, 'changed text node'), appEl)
+    },
+  },
+  {
+    name: 'renderText2Null',
+    type: 'text',
+    init: () => {
+      render(h(Text, {}, '112'), appEl)
+    },
+    change: () => {
+      render(null, appEl)
+    },
+  },
+  {
     name: 'null2text',
+    type: 'children',
     init: () => {
       render(h('div', {}), appEl)
     },
@@ -25,6 +46,7 @@ const renderType = [
   },
   {
     name: 'null2array',
+    type: 'children',
     init: () => {
       render(h('div', {}), appEl)
     },
@@ -34,6 +56,7 @@ const renderType = [
   },
   {
     name: 'null2null',
+    type: 'children',
     init: () => {
       render(h('div', {}), appEl)
     },
@@ -43,6 +66,7 @@ const renderType = [
   },
   {
     name: 'text2null',
+    type: 'children',
     init: () => {
       render(h('div', 'text2null'), appEl)
     },
@@ -52,6 +76,7 @@ const renderType = [
   },
   {
     name: 'text2array',
+    type: 'children',
     init: () => {
       render(h('div', 'test2null'), appEl)
     },
@@ -61,6 +86,7 @@ const renderType = [
   },
   {
     name: 'text2text',
+    type: 'children',
     init: () => {
       render(h('div', 'test2text'), appEl)
     },
@@ -70,6 +96,7 @@ const renderType = [
   },
   {
     name: 'array2null',
+    type: 'children',
     init() {
       render(h('div', {}, [h('a', 'a 1'), h('a', 'a 2')]), appEl)
     },
@@ -79,6 +106,7 @@ const renderType = [
   },
   {
     name: 'array2text',
+    type: 'children',
     init() {
       render(h('div', {}, [h('a', 'a 1'), h('a', 'a 2')]), appEl)
     },
@@ -88,6 +116,7 @@ const renderType = [
   },
   {
     name: 'array2array',
+    type: 'children',
     init() {
       render(h('div', {}, [h('a', 'a 1'), h('a', 'a 2')]), appEl)
     },

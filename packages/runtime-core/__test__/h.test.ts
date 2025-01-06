@@ -49,6 +49,7 @@ describe('h', () => {
     expect(h_2.children[0].children).toBe('text')
 
     // normal
+
     const h_normal = h('div', { xx: 'xx' }, 'xx')
 
     expect(h_normal.props.xx).toBe('xx')

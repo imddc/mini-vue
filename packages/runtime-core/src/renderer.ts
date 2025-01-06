@@ -1,5 +1,5 @@
 import { ShapeFlags } from '@mini-vue/shared'
-import { isSameVNodeType } from './createVNode'
+import { Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
 
@@ -9,8 +9,8 @@ export function createRenderer(options) {
     remove: hostRemove,
     patchProp: hostPatchProp,
     createElement: hostCreateElement,
-    // createText: hostCreateText,
-    // setText: hostSetText,
+    createText: hostCreateText,
+    setText: hostSetText,
     setElementText: hostSetElementText,
     // parentNode: hostParentNode,
     // nextSibling: hostNextSibling,
@@ -171,8 +171,6 @@ export function createRenderer(options) {
       i++
     }
 
-    console.log('from start => ', i, e1, e2)
-
     // 2. 从尾比
     while (i <= e1 && i <= e2) {
       const n1 = c1[e1]
@@ -185,7 +183,6 @@ export function createRenderer(options) {
       e1--
       e2--
     }
-    console.log('from end => ', i, e1, e2)
 
     if (i > e1) {
       // 新增节点
@@ -243,8 +240,6 @@ export function createRenderer(options) {
       }
 
       const lis = getLIS(newIndexToOldIndexMap)
-      console.log('newIndexToOldIndexMap => ', newIndexToOldIndexMap)
-      console.log('lis => ', lis)
 
       let j = lis.length - 1
 
@@ -283,6 +278,20 @@ export function createRenderer(options) {
     }
   }
 
+  /**
+   * @description 处理文本节点
+   */
+  function processText(n1, n2, container) {
+    if (n1 == null) {
+      hostInsert((n2.el = hostCreateText(n2.children)), container)
+    } else {
+      const el = (n2.el = n1.el)
+      if (n1.children !== n2.children) {
+        hostSetText(el, n2.children)
+      }
+    }
+  }
+
   // 初始化和diff算法
   function patch(n1, n2, container, anchor = null) {
     if (n1 === n2) {
@@ -295,7 +304,17 @@ export function createRenderer(options) {
       n1 = null
     }
 
-    processElement(n1, n2, container, anchor)
+    const { type } = n2
+    switch (type) {
+      case Text: {
+        processText(n1, n2, container)
+        break
+      }
+      default: {
+        processElement(n1, n2, container, anchor)
+        break
+      }
+    }
   }
 
   function render(vnode, container) {
