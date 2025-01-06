@@ -1,4 +1,4 @@
-import { reactive } from '@mini-vue/reactivity'
+import { proxyRefs, reactive } from '@mini-vue/reactivity'
 import { hasOwn, isFunction } from '@mini-vue/shared'
 
 /**
@@ -49,29 +49,6 @@ export function updateComponentPreRender(instance, nextVNode) {
 }
 
 /**
- * @description 创建组件实例
- */
-export function createComponentInstance(vnode) {
-  // 元素更新 n2.el = n1.el
-  // 组件更新 n2.subTree.el = n1.subTree.el
-  // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
-  // 直接复用component即可
-  const instance = {
-    data: null, // 状态
-    vnode, // 组件的虚拟节点
-    subTree: null, // 子树
-    isMountd: false, // 是否挂载完成
-    update: null as unknown as () => void, // 组件的更新函数
-    props: {},
-    attrs: {},
-    propsOptions: vnode.type.props || {},
-    proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
-  }
-
-  return instance
-}
-
-/**
  * @description 区分props和attrs
  */
 function initProps(instance, rawProps) {
@@ -110,12 +87,14 @@ const publicProperty = {
  */
 const instanceProxyHandler = {
   get(target, key) {
-    const { data, props } = target
+    const { data, props, setupState } = target
 
     if (data && hasOwn(data, key)) {
       return data[key]
     } else if (props && hasOwn(props, key)) {
       return props[key]
+    } else if (setupState && hasOwn(setupState, key)) {
+      return setupState[key]
     }
 
     // eg: proxy.$attrs
@@ -126,17 +105,20 @@ const instanceProxyHandler = {
     }
   },
   set(target, key, value) {
-    const { data, props } = target
+    const { data, props, setupState } = target
 
     if (data && hasOwn(data, key)) {
       data[key] = value
     } else if (props && hasOwn(props, key)) {
       // TODO: 浅只读修改之后,这里的逻辑直接删掉即可, 在浅只读那边已经有了提示
       // 不过可以做区分 set props和set reative
-      // props[key] = value
+      props[key] = value
       console.warn('props are readonly')
       return false
+    } else if (setupState && hasOwn(setupState, key)) {
+      setupState[key] = value
     }
+
     return true
   },
 }
@@ -179,6 +161,30 @@ export function updateComponent(n1, n2) {
 }
 
 /**
+ * @description 创建组件实例
+ */
+export function createComponentInstance(vnode) {
+  // 元素更新 n2.el = n1.el
+  // 组件更新 n2.subTree.el = n1.subTree.el
+  // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
+  // 直接复用component即可
+  const instance = {
+    data: null, // 状态
+    vnode, // 组件的虚拟节点
+    subTree: null, // 子树
+    isMountd: false, // 是否挂载完成
+    update: null as unknown as () => void, // 组件的更新函数
+    props: {},
+    attrs: {},
+    propsOptions: vnode.type.props || {},
+    proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
+    setupState: null,
+  }
+
+  return instance
+}
+
+/**
  * @description 启动组件
  */
 export function setupComponent(instance) {
@@ -191,7 +197,24 @@ export function setupComponent(instance) {
   // 赋值代理对象
   instance.proxy = new Proxy(instance, instanceProxyHandler)
 
-  const { data, render } = type
+  const { data, render, setup } = type
+
+  if (setup) {
+    const setupContext = {
+      // 这里放 slots, attrs, expose 等
+
+    }
+
+    const setupResult = setup(instance.props, setupContext)
+    // 如果setup返回一个函数, 则视为render
+    if (isFunction(setupResult)) {
+      instance.render = setupResult
+    } else {
+      // 否则返回状态 这里进行一个脱ref的处理
+      instance.setupState = proxyRefs(setupResult)
+    }
+  }
+
   if (data) {
     if (!isFunction(data)) {
       // 这里如果直接return 会影响render
@@ -202,5 +225,8 @@ export function setupComponent(instance) {
     }
   }
 
-  instance.render = render
+  // 如果setup没有返回render,则使用组件实例的render
+  if (!instance.render) {
+    instance.render = render
+  }
 }
