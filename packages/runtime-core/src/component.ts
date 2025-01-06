@@ -181,6 +181,7 @@ export function createComponentInstance(vnode) {
     propsOptions: vnode.type.props || {},
     proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
     setupState: null,
+    exposed: null,
   }
 
   return instance
@@ -216,7 +217,18 @@ export function setupComponent(instance) {
   if (setup) {
     const setupContext = {
       // 这里放 slots, attrs, expose 等
-
+      slots: instance.slots,
+      attrs: instance.attrs,
+      expose(value) {
+        instance.exposed = value
+      },
+      emit(event: string, ...payload: any[]) {
+        const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
+        const handler = instance.vnode.props[eventName]
+        if (handler) {
+          handler(...payload)
+        }
+      },
     }
 
     // 如果setup函数没有return 则报错 vue源码中也是如此

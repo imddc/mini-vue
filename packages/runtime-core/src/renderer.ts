@@ -30,13 +30,11 @@ export function createRenderer(options) {
   function unmount(vnode) {
     if (vnode.type === Fragment) {
       unmountChildren(vnode.children)
-    } else {
+    } else if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
       // 如果是组件, 则将组件的subTree的el卸载掉
-      if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
-        hostRemove(vnode.component.subTree.el)
-      } else {
-        hostRemove(vnode.el)
-      }
+      unmount(vnode.component.subTree)
+    } else {
+      hostRemove(vnode.el)
     }
   }
 
