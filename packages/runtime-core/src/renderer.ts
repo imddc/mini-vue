@@ -311,7 +311,7 @@ export function createRenderer(options) {
   }
 
   /**
-   * @description 创建组件effect
+   * @description 创建组件的渲染effect
    * 也就是render
    */
   function setupRenderEffect(instance, container, anchor) {
@@ -353,14 +353,7 @@ export function createRenderer(options) {
     // 启动组件
     setupComponent(instance)
 
-    // 元素更新 n2.el = n1.el
-    // 组件更新 n2.subTree.el = n1.subTree.el
-    vnode.component = instance
-    // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
-    // 直接复用component即可
-
-    console.log('instance => ', instance)
-
+    // 创建渲染effect以及更新
     setupRenderEffect(instance, container, anchor)
   }
 

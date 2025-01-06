@@ -2,6 +2,10 @@ import { reactive } from '@mini-vue/reactivity'
 import { hasOwn, isFunction } from '@mini-vue/shared'
 
 export function createComponentInstance(vnode) {
+  // 元素更新 n2.el = n1.el
+  // 组件更新 n2.subTree.el = n1.subTree.el
+  // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
+  // 直接复用component即可
   const instance = {
     data: null, // 状态
     vnode, // 组件的虚拟节点
@@ -11,7 +15,6 @@ export function createComponentInstance(vnode) {
     props: {},
     attrs: {},
     propsOptions: vnode.type.props || {},
-    conponent: null,
     proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
   }
 
@@ -91,17 +94,16 @@ export function setupComponent(instance) {
   // 赋值代理对象
   instance.proxy = new Proxy(instance, instanceProxyHandler)
 
-  let data = type.data
-  if (!data) {
-    data = () => ({})
-  }
-  if (!isFunction(data)) {
-    console.warn('data option must be a function')
-    return
+  const { data, render } = type
+  if (data) {
+    if (!isFunction(data)) {
+      // 这里如果直接return 会影响render
+      console.warn('data option must be a function')
+    } else {
+      // data中可以拿到props
+      instance.data = reactive(data.call(instance.proxy))
+    }
   }
 
-  // data中可以拿到props
-  instance.data = reactive(data.call(instance.proxy))
-
-  instance.render = type.render
+  instance.render = render
 }
