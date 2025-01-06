@@ -4,6 +4,7 @@ import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
 import { queueJob } from './scheduler'
+import { createComponentInstance, setupComponent } from './component'
 
 export function createRenderer(options) {
   const {
@@ -310,102 +311,11 @@ export function createRenderer(options) {
   }
 
   /**
-   * @description 区分props和
+   * @description 创建组件effect
+   * 也就是render
    */
-  function initProps(instance, rawProps) {
-    const props = {}
-    const attrs = {}
-    const { propsOptions } = instance // 用于在组件中定义的
-
-    if (rawProps) {
-      for (const key in rawProps) {
-        const value = rawProps[key]
-
-        // 说明是组件中的属性
-        if (key in propsOptions) {
-          props[key] = value
-        } else {
-          attrs[key] = value
-        }
-      }
-    }
-
-    // TODO: 这里要写成潜只读的reactive
-    instance.props = reactive(props)
-    instance.attrs = attrs
-  }
-
-  /**
-   * @description 组件挂载
-   */
-  function mountComponent(vnode, container, anchor) {
-    const {
-      data = () => ({}),
-      render,
-      props: propsOptions = {},
-    } = vnode.type
-
-    const state = reactive(data())
-
-    const instance = {
-      state, // 状态
-      vnode, // 组件的虚拟节点
-      subTree: null, // 子树
-      isMountd: false, // 是否挂载完成
-      update: null as unknown as () => void, // 组件的更新函数
-      props: {},
-      attrs: {},
-      propsOptions,
-      proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
-    }
-
-    // 元素更新 n2.el = n1.el
-    // 组件更新 n2.subTree.el = n1.subTree.el
-    vnode.component = instance
-    // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
-    // 直接复用component即可
-
-    // 根据propsOptions区分props和attrs
-    initProps(instance, vnode.props)
-
-    const publicProperty = {
-      $attrs: instance => instance.attrs,
-    }
-
-    instance.proxy = new Proxy(instance, {
-      get(target, key) {
-        const { state, props } = target
-
-        if (state && hasOwn(state, key)) {
-          return state[key]
-        } else if (props && hasOwn(props, key)) {
-          return props[key]
-        }
-
-        // eg: proxy.$attrs
-        const getter = publicProperty[key]
-        // v => v.attrs
-        if (getter) {
-          return getter(instance)
-        }
-      },
-      set(target, key, value) {
-        const { state, props } = target
-
-        if (state && hasOwn(state, key)) {
-          state[key] = value
-        } else if (props && hasOwn(props, key)) {
-          // TODO: 浅只读修改之后,这里的逻辑直接删掉即可, 在浅只读那边已经有了提示
-          // 不过可以做区分 set props和set reative
-          // props[key] = value
-          console.warn('props are readonly')
-          return false
-        }
-        return true
-      },
-    })
-
-    console.log('instance => ', instance)
+  function setupRenderEffect(instance, container, anchor) {
+    const { render } = instance
 
     const componentUpdateFn = () => {
       if (!instance.isMountd) {
@@ -432,6 +342,26 @@ export function createRenderer(options) {
 
     const update = (instance.update = () => effect.run())
     update()
+  }
+  /**
+   * @description 组件挂载
+   */
+  function mountComponent(vnode, container, anchor) {
+    // 初始化组件
+    const instance = (vnode.component = createComponentInstance(vnode))
+
+    // 启动组件
+    setupComponent(instance)
+
+    // 元素更新 n2.el = n1.el
+    // 组件更新 n2.subTree.el = n1.subTree.el
+    vnode.component = instance
+    // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
+    // 直接复用component即可
+
+    console.log('instance => ', instance)
+
+    setupRenderEffect(instance, container, anchor)
   }
 
   /**
