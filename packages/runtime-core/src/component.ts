@@ -1,6 +1,56 @@
 import { reactive } from '@mini-vue/reactivity'
 import { hasOwn, isFunction } from '@mini-vue/shared'
 
+/**
+ * @description 判断vnode的props是否发生了变化
+ */
+export function hasPropsChange(prevProps, nextProps) {
+  const nKeys = Object.keys(nextProps)
+  const len = nKeys.length
+  if (len !== Object.keys(prevProps).length) {
+    return true
+  }
+  for (let i = 0; i < len; i++) {
+    const key = nKeys[i]
+    if (nextProps[key] !== prevProps[key]) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * @description 更新组件的props
+ */
+export function updateProps(instance, prevProps, nextProps) {
+  // prevProps 和 nextProps 均为vnode上面的props
+  if (hasPropsChange(prevProps, nextProps)) {
+    // 将所有新的propx添加到instance的props中
+    for (const key in nextProps) {
+      instance.props[key] = nextProps[key]
+    }
+    // 将原instance的props中有但新props中没有的属性删除
+    for (const key in instance.props) {
+      if (!(key in nextProps)) {
+        delete instance.props[key]
+      }
+    }
+  }
+}
+
+/**
+ * @description 预更新组件
+ */
+export function updateComponentPreRender(instance, nextVNode) {
+  instance.next = null
+  instance.vnode = nextVNode
+
+  updateProps(instance, instance.props, nextVNode.props)
+}
+
+/**
+ * @description 创建组件实例
+ */
 export function createComponentInstance(vnode) {
   // 元素更新 n2.el = n1.el
   // 组件更新 n2.subTree.el = n1.subTree.el
@@ -22,7 +72,7 @@ export function createComponentInstance(vnode) {
 }
 
 /**
- * @description 区分props和
+ * @description 区分props和attrs
  */
 function initProps(instance, rawProps) {
   const props = {}
@@ -47,10 +97,17 @@ function initProps(instance, rawProps) {
   instance.attrs = attrs
 }
 
+/**
+ * @description 用于访问的代理映射
+ */
 const publicProperty = {
   $attrs: i => i.attrs,
 }
 
+/**
+ * @description 组件实例的访问代理
+ * 用于在setupctx和data中访问当组件的data,props,attrs
+ */
 const instanceProxyHandler = {
   get(target, key) {
     const { data, props } = target
@@ -84,6 +141,46 @@ const instanceProxyHandler = {
   },
 }
 
+/**
+ * @description 用于判断组件是否应该更新
+ * 判断条件:
+ * - 属性是后发生变化
+ * - 是否存在插槽
+ */
+export function shouldComponentUpdate(n1, n2) {
+  const { props: prevProps, children: prevChildren } = n1
+  const { props: nextProps, children: nextChildren } = n2
+
+  // 插槽存在 则更新
+  if (prevChildren || nextChildren) {
+    return true
+  }
+  // 如果属性不一致,则更新
+  if (prevProps === nextProps) {
+    return false
+  }
+  return hasPropsChange(prevProps, nextProps)
+}
+
+/**
+ * @description 更新组件
+ * 通过判断组件是否应该更新来调用组件实例的update方法
+ */
+export function updateComponent(n1, n2) {
+  // 复用组件实例
+  const instance = (n2.component = n1.component)
+
+  // 更新逻辑统一
+  if (shouldComponentUpdate(n1, n2)) {
+    // 如果调用update时, next存在, 则说明是属性更新,插槽更新
+    instance.next = n2
+    instance.update()
+  }
+}
+
+/**
+ * @description 启动组件
+ */
 export function setupComponent(instance) {
   const { props, type } = instance.vnode
 
