@@ -1,5 +1,5 @@
 import { proxyRefs, reactive } from '@mini-vue/reactivity'
-import { hasOwn, isFunction } from '@mini-vue/shared'
+import { ShapeFlags, hasOwn, isFunction } from '@mini-vue/shared'
 
 /**
  * @description 判断vnode的props是否发生了变化
@@ -79,6 +79,7 @@ function initProps(instance, rawProps) {
  */
 const publicProperty = {
   $attrs: i => i.attrs,
+  $slots: i => i.slots,
 }
 
 /**
@@ -176,6 +177,7 @@ export function createComponentInstance(vnode) {
     update: null as unknown as () => void, // 组件的更新函数
     props: {},
     attrs: {},
+    slots: {},
     propsOptions: vnode.type.props || {},
     proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
     setupState: null,
@@ -184,27 +186,40 @@ export function createComponentInstance(vnode) {
   return instance
 }
 
+export function initSlots(instance, children) {
+  if (instance.vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
+    instance.slots = children
+  } else {
+    instance.slots = {}
+  }
+}
+
 /**
  * @description 启动组件
  */
 export function setupComponent(instance) {
-  const { props, type } = instance.vnode
+  const { props, type, children } = instance.vnode
 
   // 赋值属性
   // 根据组件的props将vnode上面的props区分为props和attrs
   initProps(instance, props)
+
+  // 赋值插槽
+  initSlots(instance, children)
 
   // 赋值代理对象
   instance.proxy = new Proxy(instance, instanceProxyHandler)
 
   const { data, render, setup } = type
 
+  // 如果使用了setup
   if (setup) {
     const setupContext = {
       // 这里放 slots, attrs, expose 等
 
     }
 
+    // 如果setup函数没有return 则报错 vue源码中也是如此
     const setupResult = setup(instance.props, setupContext)
     // 如果setup返回一个函数, 则视为render
     if (isFunction(setupResult)) {
@@ -215,6 +230,7 @@ export function setupComponent(instance) {
     }
   }
 
+  // 如果有data
   if (data) {
     if (!isFunction(data)) {
       // 这里如果直接return 会影响render

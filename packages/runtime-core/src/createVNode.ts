@@ -28,11 +28,14 @@ export function createVNode(type, props?, children?) {
     shapeFlag,
   }
 
-  // children 只分两种情况
-  // 文本和数组
+  // 对于非组件vnode children 只分两种情况 文本和数组
+  // 对于组件vnode children 为插槽
   if (children) {
     if (Array.isArray(children)) {
       vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN // 16 + 1
+      // 不是数组 但是对象
+    } else if (isObject(children)) {
+      vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN // 32 + 4
     } else {
       // 文本
       children = String(children)
