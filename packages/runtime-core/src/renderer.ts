@@ -1,5 +1,5 @@
 import { ShapeFlags } from '@mini-vue/shared'
-import { ReactiveEffect } from '@mini-vue/reactivity'
+import { ReactiveEffect, isRef } from '@mini-vue/reactivity'
 import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
@@ -434,6 +434,35 @@ export function createRenderer(options) {
     }
   }
 
+  /**
+   * @description 设置ref
+   * TODO: ref的值为组件时应为组件实例, 即使组件expose了, 也应该是组件实例
+   * 为dom时应为vnode的挂载dom
+   */
+  function setRef(rawRef, vnode) {
+    const value = vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT
+      // ? (vnode.component.exposed || vnode.component.proxy)
+      ? vnode.component
+      : vnode.el
+
+    if (isRef(rawRef)) {
+      rawRef.value = value
+    }
+  }
+
+  /**
+   * @description 将ref排除出props
+   */
+  function normalizeProps(rawProps) {
+    const REF_KEY = 'ref'
+    for (const key in rawProps) {
+      if (key === REF_KEY) {
+        delete rawProps[key]
+      }
+    }
+    return rawProps
+  }
+
   // 初始化和diff算法
   function patch(n1, n2, container, anchor = null, parentComponent = null) {
     if (n1 === n2) {
@@ -446,7 +475,9 @@ export function createRenderer(options) {
       n1 = null
     }
 
-    const { type, shapeFlag } = n2
+    normalizeProps(n2.props)
+
+    const { type, shapeFlag, ref } = n2
     switch (type) {
       case Text: {
         processText(n1, n2, container)
@@ -464,6 +495,10 @@ export function createRenderer(options) {
         }
         break
       }
+    }
+
+    if (ref !== undefined) {
+      setRef(ref, n2)
     }
   }
 

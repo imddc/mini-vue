@@ -59,10 +59,9 @@ export function proxyRefs(objectWithRef) {
 }
 
 function createRef(rawValue) {
-  if (rawValue[ReactiveFlags.IS_REF]) {
+  if (isRef(rawValue)) {
     return rawValue
   }
-
   return new RefImpl(rawValue)
 }
 

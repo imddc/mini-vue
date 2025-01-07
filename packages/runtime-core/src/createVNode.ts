@@ -65,6 +65,7 @@ export function createVNode(type: VNodeType, props?: PropsType | null, children?
     key: props?.key, // key in diff
     el: null,
     shapeFlag,
+    ref: props?.ref,
   }
 
   // 对于非组件vnode children 只分两种情况 文本和数组
