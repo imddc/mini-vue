@@ -1,5 +1,5 @@
 import type { ComponentInstance, PropsType, RawComponent, SlotsType } from './component'
-import { ShapeFlags, isObject, isString } from '@mini-vue/shared'
+import { ShapeFlags, isFunction, isObject, isString } from '@mini-vue/shared'
 
 export type VNodeType =
   | string
@@ -55,7 +55,9 @@ export function createVNode(type: VNodeType, props?: PropsType | null, children?
     ? ShapeFlags.ELEMENT
     : isObject(type)
       ? ShapeFlags.STATEFUL_COMPONENT
-      : 0
+      : isFunction(type)
+        ? ShapeFlags.FUNCTIONAL_COMPONENT
+        : 0
 
   const vnode = {
     __v_isVNode: true,

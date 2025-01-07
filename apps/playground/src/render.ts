@@ -18,6 +18,18 @@ const renderType = [
     name: 'renderFragment',
     type: 'text',
     init: () => {
+      const FunctionalComp = ({ a, b }) => h(Fragment, ['hah => ', a + b])
+      render(h(FunctionalComp, { a: 1, b: 2 }), appEl)
+    },
+    change: () => {
+      const FunctionalComp = ({ a, b }) => h(Fragment, ['hah => ', a + b])
+      render(h(FunctionalComp, { a: 3, b: 4 }), appEl)
+    },
+  },
+  {
+    name: 'renderFragment',
+    type: 'text',
+    init: () => {
       render(null, appEl)
     },
     change: () => {

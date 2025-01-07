@@ -337,12 +337,29 @@ export function createRenderer(options) {
   }
 
   /**
+   * 用于统一渲染组件
+   * 函数式组件和状态组件
+   */
+  function renderComponent(instance) {
+    const { render, vnode, proxy, attrs } = instance
+
+    let subTree
+    // 状态组件
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      // 获取render返回的vnode
+      subTree = render.call(proxy, proxy)
+    } else {
+      // 函数式组件
+      subTree = vnode.type(attrs)
+    }
+    return subTree
+  }
+
+  /**
    * @description 创建组件的渲染effect
    * 也就是render
    */
   function setupRenderEffect(instance, container, anchor) {
-    const { render } = instance
-
     const componentUpdateFn = () => {
       if (!instance.isMountd) {
         // 获取全部beforeMount钩子
@@ -353,7 +370,7 @@ export function createRenderer(options) {
 
         // 挂载
         // render 执行会返回一个vnode 相当于组件内部的vnode
-        const subTree = render.call(instance.proxy, instance.proxy)
+        const subTree = renderComponent(instance)
         patch(null, subTree, container, anchor, instance)
         instance.isMountd = true
         instance.subTree = subTree
@@ -379,7 +396,7 @@ export function createRenderer(options) {
         }
 
         // 基于状态的更新
-        const subTree = render.call(instance.proxy, instance.proxy)
+        const subTree = renderComponent(instance)
         patch(instance.subTree, subTree, container, anchor, instance)
         instance.subTree = subTree
 
