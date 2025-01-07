@@ -19,7 +19,7 @@ export const onBeforeUpdate = createHook(LifeCycle.BEFORE_UPDATE)
 export const onUpdated = createHook(LifeCycle.UPDATED)
 
 function createHook(type: LifeCycle) {
-  return (hook: HookType, target = currentInstance as unknown as LifeCycleHooks) => {
+  return (hook: HookType, target = currentInstance) => {
     if (target) {
       const hooks: HookType[] = (target[type] || (target[type] = []))
       // FIX:

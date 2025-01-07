@@ -51,7 +51,7 @@ export function createRenderer(options) {
   /**
    * @description 挂载元素
    */
-  function mountElement(vnode, container, anchor) {
+  function mountElement(vnode, container, anchor, parentComponent) {
     const { type, props, shapeFlag } = vnode
     const el = vnode.el = hostCreateElement(type)
 
@@ -64,7 +64,7 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       hostSetElementText(el, vnode.children)
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode.children, el)
+      mountChildren(vnode.children, el, parentComponent)
     }
 
     hostInsert(el, container, anchor)
@@ -73,16 +73,16 @@ export function createRenderer(options) {
   /**
    * @description 挂载子节点
    */
-  function mountChildren(children, container) {
+  function mountChildren(children, container, parentComponent) {
     for (let i = 0; i < children.length; i++) {
-      patch(null, children[i], container)
+      patch(null, children[i], container, null, parentComponent)
     }
   }
 
   /**
    * @description 比较元素
    */
-  function patchElement(n1, n2) {
+  function patchElement(n1, n2, parentComponent) {
     // 1. 比较元素差异 对dom元素复用
     // 2. 比较属性和元素的子节点
     const el = (n2.el = n1.el)
@@ -91,13 +91,13 @@ export function createRenderer(options) {
     const newProps = n2.props || {}
 
     patchProps(oldProps, newProps, el)
-    patchChildren(n1, n2, el)
+    patchChildren(n1, n2, el, parentComponent)
   }
 
   /**
    * @description 比较子节点
    */
-  function patchChildren(n1, n2, el) {
+  function patchChildren(n1, n2, el, parentComponent) {
     const c1 = n1.children
     const c2 = n2.children
 
@@ -115,7 +115,7 @@ export function createRenderer(options) {
     if (c1 == null) {
       // 新的是数组, 挂载
       if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        mountChildren(c2, el)
+        mountChildren(c2, el, parentComponent)
         // 新的是文本or null
       } else {
         // 加一层判断, 为null则不进行操作
@@ -140,7 +140,7 @@ export function createRenderer(options) {
         hostSetElementText(el, c2)
       } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         hostSetElementText(el, '')
-        mountChildren(c2, el)
+        mountChildren(c2, el, parentComponent)
       } else {
         hostSetElementText(el, '')
       }
@@ -285,12 +285,12 @@ export function createRenderer(options) {
   /**
    * @description 对元素处理
    */
-  function processElement(n1, n2, container, anchor) {
+  function processElement(n1, n2, container, anchor, parentComponent) {
     if (n1 == null) {
-      mountElement(n2, container, anchor)
+      mountElement(n2, container, anchor, parentComponent)
     } else {
       // diff
-      patchElement(n1, n2)
+      patchElement(n1, n2, parentComponent)
     }
   }
 
@@ -311,11 +311,11 @@ export function createRenderer(options) {
   /**
    * @description 处理Fragment节点
    */
-  function processFragment(n1, n2, container) {
+  function processFragment(n1, n2, container, parentComponent) {
     if (n1 == null) {
-      mountChildren(n2.children, container)
+      mountChildren(n2.children, container, parentComponent)
     } else {
-      patchChildren(n1, n2, container)
+      patchChildren(n1, n2, container, parentComponent)
     }
   }
 
@@ -337,7 +337,7 @@ export function createRenderer(options) {
         // 挂载
         // render 执行会返回一个vnode 相当于组件内部的vnode
         const subTree = render.call(instance.proxy, instance.proxy)
-        patch(null, subTree, container, anchor)
+        patch(null, subTree, container, anchor, instance)
         instance.isMountd = true
         instance.subTree = subTree
 
@@ -363,7 +363,7 @@ export function createRenderer(options) {
 
         // 基于状态的更新
         const subTree = render.call(instance.proxy, instance.proxy)
-        patch(instance.subTree, subTree, container, anchor)
+        patch(instance.subTree, subTree, container, anchor, instance)
         instance.subTree = subTree
 
         // 获取全部updated钩子
@@ -388,9 +388,14 @@ export function createRenderer(options) {
   /**
    * @description 组件挂载
    */
-  function mountComponent(vnode, container, anchor) {
+  function mountComponent(vnode, container, anchor, parentComponent) {
     // 初始化组件
-    const instance = (vnode.component = createComponentInstance(vnode))
+    const instance = (
+      vnode.component = createComponentInstance(
+        vnode,
+        parentComponent,
+      )
+    )
 
     // 启动组件
     setupComponent(instance)
@@ -402,10 +407,10 @@ export function createRenderer(options) {
   /**
    * @description 处理组件
    */
-  function processComponent(n1, n2, container, anchor) {
+  function processComponent(n1, n2, container, anchor, parentComponent) {
     if (n1 == null) {
       // mount
-      mountComponent(n2, container, anchor)
+      mountComponent(n2, container, anchor, parentComponent)
     } else {
       // patch
       updateComponent(n1, n2)
@@ -413,7 +418,7 @@ export function createRenderer(options) {
   }
 
   // 初始化和diff算法
-  function patch(n1, n2, container, anchor = null) {
+  function patch(n1, n2, container, anchor = null, parentComponent = null) {
     if (n1 === n2) {
       return
     }
@@ -431,14 +436,14 @@ export function createRenderer(options) {
         break
       }
       case Fragment: {
-        processFragment(n1, n2, container)
+        processFragment(n1, n2, container, parentComponent)
         break
       }
       default: {
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(n1, n2, container, anchor)
+          processElement(n1, n2, container, anchor, parentComponent)
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
-          processComponent(n1, n2, container, anchor)
+          processComponent(n1, n2, container, anchor, parentComponent)
         }
         break
       }

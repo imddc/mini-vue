@@ -1,17 +1,56 @@
+import type { ComponentInstance, PropsType, RawComponent, SlotsType } from './component'
 import { ShapeFlags, isObject, isString } from '@mini-vue/shared'
 
-export const Text = Symbol('Text')
-export const Fragment = Symbol('Fragment')
+export type VNodeType =
+  | string
+  | RawComponent
+  | ComponentInstance
+  | typeof Text
+  | typeof Fragment
 
-export function isVNode(val) {
+export interface VNode {
+  key: any
+  el: HTMLElement | null
+  children: VNodeNormalizedChildren
+  component: ComponentInstance
+  props: PropsType
+  shapeFlag: ShapeFlags
+  type: VNodeType
+  __v_isVNode: boolean
+
+}
+
+type VNodeChildAtom =
+  | VNode
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | void
+
+export type VNodeArrayChildren = Array<VNodeArrayChildren | VNodeChildAtom>
+
+export type VNodeChild = VNodeChildAtom | VNodeArrayChildren
+
+export type VNodeNormalizedChildren =
+  | string
+  | VNodeArrayChildren
+  | SlotsType
+  | null
+
+export const Text: unique symbol = Symbol('Text')
+export const Fragment: unique symbol = Symbol('Fragment')
+
+export function isVNode(val: any) {
   return val && val.__v_isVNode
 }
 
-export function isSameVNodeType(n1, n2) {
+export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
 }
 
-export function createVNode(type, props?, children?) {
+export function createVNode(type: VNodeType, props?: PropsType, children?: VNodeNormalizedChildren) {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : isObject(type)

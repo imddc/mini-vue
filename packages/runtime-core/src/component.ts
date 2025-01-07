@@ -1,10 +1,59 @@
+import type { VNode, VNodeNormalizedChildren } from './createVNode'
 import { proxyRefs, reactive } from '@mini-vue/reactivity'
 import { ShapeFlags, hasOwn, isFunction } from '@mini-vue/shared'
+
+export interface DataType {
+  [key: string]: any
+}
+
+export interface PropsType {
+  [key: string]: any
+}
+
+export interface AttrsType {
+  [key: string]: any
+}
+
+export interface SlotsType {
+  [name: string]: unknown
+}
+
+export interface ComponentInstance {
+  data: DataType | null
+  vnode: VNode
+  subTree: null
+  isMountd: boolean
+  update: () => void
+  props: PropsType
+  attrs: AttrsType
+  slots: SlotsType
+  propsOptions: PropsType
+  proxy: InstanceType<typeof Proxy>
+  setupState: SetupState | null
+  exposed: null
+  parent: ComponentInstance | null
+  provides: Record<string | symbol, any>
+  next: VNode | null
+  render: Render | SetupState | null
+}
+
+export type SetupState = PropsType | AttrsType | SlotsType
+export type Setup = (props: PropsType, setupCtx: SetupState) => SetupState | Render
+export type Render = (proxy: SetupState) => VNode
+
+export interface RawComponent {
+  props?: PropsType
+  data?: () => {
+    [key in string | symbol]: any
+  }
+  setup?: Setup
+  render?: Render
+}
 
 /**
  * @description 判断vnode的props是否发生了变化
  */
-export function hasPropsChange(prevProps, nextProps) {
+export function hasPropsChange(prevProps: PropsType, nextProps: PropsType) {
   const nKeys = Object.keys(nextProps)
   const len = nKeys.length
   if (len !== Object.keys(prevProps).length) {
@@ -22,7 +71,7 @@ export function hasPropsChange(prevProps, nextProps) {
 /**
  * @description 更新组件的props
  */
-export function updateProps(instance, prevProps, nextProps) {
+export function updateProps(instance: ComponentInstance, prevProps: PropsType, nextProps: PropsType) {
   // prevProps 和 nextProps 均为vnode上面的props
   if (hasPropsChange(prevProps, nextProps)) {
     // 将所有新的propx添加到instance的props中
@@ -41,7 +90,7 @@ export function updateProps(instance, prevProps, nextProps) {
 /**
  * @description 预更新组件
  */
-export function updateComponentPreRender(instance, nextVNode) {
+export function updateComponentPreRender(instance: ComponentInstance, nextVNode: VNode) {
   instance.next = null
   instance.vnode = nextVNode
 
@@ -51,7 +100,7 @@ export function updateComponentPreRender(instance, nextVNode) {
 /**
  * @description 区分props和attrs
  */
-function initProps(instance, rawProps) {
+function initProps(instance: ComponentInstance, rawProps: PropsType) {
   const props = {}
   const attrs = {}
   const { propsOptions } = instance // 用于在组件中定义的
@@ -87,7 +136,7 @@ const publicProperty = {
  * 用于在setupctx和data中访问当组件的data,props,attrs
  */
 const instanceProxyHandler = {
-  get(target, key) {
+  get(target: ComponentInstance, key: any) {
     const { data, props, setupState } = target
 
     if (key === '$emit') {
@@ -109,7 +158,7 @@ const instanceProxyHandler = {
       return getter(target)
     }
   },
-  set(target, key, value) {
+  set(target: ComponentInstance, key: any, value: any) {
     const { data, props, setupState } = target
 
     if (data && hasOwn(data, key)) {
@@ -134,7 +183,7 @@ const instanceProxyHandler = {
  * - 属性是后发生变化
  * - 是否存在插槽
  */
-export function shouldComponentUpdate(n1, n2) {
+export function shouldComponentUpdate(n1: VNode, n2: VNode) {
   const { props: prevProps, children: prevChildren } = n1
   const { props: nextProps, children: nextChildren } = n2
 
@@ -153,7 +202,7 @@ export function shouldComponentUpdate(n1, n2) {
  * @description 更新组件
  * 通过判断组件是否应该更新来调用组件实例的update方法
  */
-export function updateComponent(n1, n2) {
+export function updateComponent(n1: VNode, n2: VNode) {
   // 复用组件实例
   const instance = (n2.component = n1.component)
 
@@ -168,12 +217,12 @@ export function updateComponent(n1, n2) {
 /**
  * @description 创建组件实例
  */
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode: VNode, parent: ComponentInstance) {
   // 元素更新 n2.el = n1.el
   // 组件更新 n2.subTree.el = n1.subTree.el
   // 组件更新改为 n2.component.subTree.el = n1.component.subTree.el
   // 直接复用component即可
-  const instance = {
+  const instance: ComponentInstance = {
     data: null, // 状态
     vnode, // 组件的虚拟节点
     subTree: null, // 子树
@@ -182,10 +231,14 @@ export function createComponentInstance(vnode) {
     props: {},
     attrs: {},
     slots: {},
-    propsOptions: vnode.type.props || {},
+    propsOptions: (vnode.type as unknown as ComponentInstance).props || {},
     proxy: null as unknown as InstanceType<typeof Proxy>, // 用以代理 props data, attrs
     setupState: null,
     exposed: null,
+    parent,
+    provides: parent ? parent.provides : Object.create(null),
+    next: null,
+    render: null,
   }
 
   return instance
@@ -194,9 +247,9 @@ export function createComponentInstance(vnode) {
 /**
  * @description 初始化插槽
  */
-export function initSlots(instance, children) {
+export function initSlots(instance: ComponentInstance, children: VNodeNormalizedChildren) {
   if (instance.vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
-    instance.slots = children
+    instance.slots = children as SlotsType
   } else {
     instance.slots = {}
   }
@@ -205,7 +258,7 @@ export function initSlots(instance, children) {
 /**
  * @description 创建emit 用于调用
  */
-function createEmit(instance) {
+function createEmit(instance: ComponentInstance) {
   return (event: string, ...payload: any[]) => {
     const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
     const handler = instance.vnode.props[eventName]
@@ -218,7 +271,7 @@ function createEmit(instance) {
 /**
  * @description 启动组件
  */
-export function setupComponent(instance) {
+export function setupComponent(instance: ComponentInstance) {
   const { props, type, children } = instance.vnode
 
   // 赋值属性
@@ -229,9 +282,9 @@ export function setupComponent(instance) {
   initSlots(instance, children)
 
   // 赋值代理对象
-  instance.proxy = new Proxy(instance, instanceProxyHandler)
+  instance.proxy = new Proxy<ComponentInstance>(instance, instanceProxyHandler)
 
-  const { data, render, setup } = type
+  const { data, render, setup } = type as RawComponent
 
   // 如果使用了setup
   if (setup) {
@@ -272,12 +325,12 @@ export function setupComponent(instance) {
 
   // 如果setup没有返回render,则使用组件实例的render
   if (!instance.render) {
-    instance.render = render
+    instance.render = render!
   }
 }
 
 // eslint-disable-next-line import/no-mutable-exports
-export let currentInstance = null
+export let currentInstance: ComponentInstance | null = null
 /**
  * @description 获取当前的组件实例
  */
@@ -285,7 +338,7 @@ export function getCurrentInstance() {
   return currentInstance
 }
 
-export function setCurrentInstance(instance) {
+export function setCurrentInstance(instance: ComponentInstance) {
   currentInstance = instance
 }
 
