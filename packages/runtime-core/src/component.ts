@@ -191,6 +191,9 @@ export function createComponentInstance(vnode) {
   return instance
 }
 
+/**
+ * @description 初始化插槽
+ */
 export function initSlots(instance, children) {
   if (instance.vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
     instance.slots = children
@@ -199,6 +202,9 @@ export function initSlots(instance, children) {
   }
 }
 
+/**
+ * @description 创建emit 用于调用
+ */
 function createEmit(instance) {
   return (event: string, ...payload: any[]) => {
     const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
@@ -239,8 +245,11 @@ export function setupComponent(instance) {
       emit: createEmit(instance),
     }
 
+    setCurrentInstance(instance)
     // 如果setup函数没有return 则报错 vue源码中也是如此
     const setupResult = setup(instance.props, setupContext)
+    unsetCurrentInstance()
+
     // 如果setup返回一个函数, 则视为render
     if (isFunction(setupResult)) {
       instance.render = setupResult
@@ -265,4 +274,21 @@ export function setupComponent(instance) {
   if (!instance.render) {
     instance.render = render
   }
+}
+
+// eslint-disable-next-line import/no-mutable-exports
+export let currentInstance = null
+/**
+ * @description 获取当前的组件实例
+ */
+export function getCurrentInstance() {
+  return currentInstance
+}
+
+export function setCurrentInstance(instance) {
+  currentInstance = instance
+}
+
+export function unsetCurrentInstance() {
+  currentInstance = null
 }

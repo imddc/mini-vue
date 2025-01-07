@@ -1,3 +1,5 @@
 export * from './h'
 export * from './createVNode'
 export * from './renderer'
+export * from './apiLifeCycle'
+export { getCurrentInstance } from './component'

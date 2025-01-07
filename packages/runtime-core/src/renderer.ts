@@ -10,6 +10,7 @@ import {
   updateComponent,
   updateComponentPreRender,
 } from './component'
+import { LifeCycle, LifeCycleHooks, invokeArrayFns } from './apiLifeCycle'
 
 export function createRenderer(options) {
   const {
@@ -327,12 +328,24 @@ export function createRenderer(options) {
 
     const componentUpdateFn = () => {
       if (!instance.isMountd) {
+        // 获取全部beforeMount钩子
+        const beforeMountFns = instance[LifeCycle.BEFORE_MOUNT]
+        if (beforeMountFns) {
+          invokeArrayFns(beforeMountFns)
+        }
+
         // 挂载
         // render 执行会返回一个vnode 相当于组件内部的vnode
         const subTree = render.call(instance.proxy, instance.proxy)
         patch(null, subTree, container, anchor)
         instance.isMountd = true
         instance.subTree = subTree
+
+        // 获取全部mounted钩子
+        const mountedFns = instance[LifeCycle.MOUNTED]
+        if (mountedFns) {
+          invokeArrayFns(mountedFns)
+        }
       } else {
         // 更新
         const { next } = instance
@@ -342,10 +355,22 @@ export function createRenderer(options) {
           // slots, props
         }
 
+        // 获取全部beforeUpdate钩子
+        const beforeUpdateFns = instance[LifeCycle.BEFORE_UPDATE]
+        if (beforeUpdateFns) {
+          invokeArrayFns(beforeUpdateFns)
+        }
+
         // 基于状态的更新
         const subTree = render.call(instance.proxy, instance.proxy)
         patch(instance.subTree, subTree, container, anchor)
         instance.subTree = subTree
+
+        // 获取全部updated钩子
+        const updatedFns = instance[LifeCycle.UPDATED]
+        if (updatedFns) {
+          invokeArrayFns(updatedFns)
+        }
       }
     }
 
