@@ -1,5 +1,6 @@
 import type { ComponentInstance, PropsType, RawComponent, SlotsType } from './component'
 import { ShapeFlags, isFunction, isObject, isString } from '@mini-vue/shared'
+import { isTeleport } from './Teleport'
 
 export type VNodeType =
   | string
@@ -53,11 +54,13 @@ export function isSameVNodeType(n1: VNode, n2: VNode) {
 export function createVNode(type: VNodeType, props?: PropsType | null, children?: VNodeNormalizedChildren) {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
-    : isObject(type)
-      ? ShapeFlags.STATEFUL_COMPONENT
-      : isFunction(type)
-        ? ShapeFlags.FUNCTIONAL_COMPONENT
-        : 0
+    : isTeleport(type)
+      ? ShapeFlags.TELEPORT
+      : isObject(type)
+        ? ShapeFlags.STATEFUL_COMPONENT
+        : isFunction(type)
+          ? ShapeFlags.FUNCTIONAL_COMPONENT
+          : 0
 
   const vnode = {
     __v_isVNode: true,

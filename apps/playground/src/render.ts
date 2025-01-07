@@ -1,5 +1,5 @@
 import { render } from '@mini-vue/runtime-dom'
-import { Fragment, Text, h } from '@mini-vue/runtime-core'
+import { Fragment, Teleport, Text, h } from '@mini-vue/runtime-core'
 
 const appEl = document.querySelector('#app')!
 const btnWrapperEl = document.querySelector('.btn-wrapper')!
@@ -14,6 +14,26 @@ function addBtn(value, fn) {
 }
 
 const renderType = [
+  {
+    name: 'Teleport',
+    type: 'component',
+    init: () => {
+      render(h(Teleport, { to: '#root' }, ['haha 这是 => ', 'teleport ']), appEl)
+    },
+    change: () => {
+      render(h(Teleport, { to: '#app' }, ['haha 这是 => ', 'teleport ']), appEl)
+    },
+  },
+  {
+    name: 'Teleport unmount',
+    type: 'component',
+    init: () => {
+      render(h(Teleport, { to: '#root' }, h(Text, 'teleport')), appEl)
+    },
+    change: () => {
+      render(null, appEl)
+    },
+  },
   {
     name: 'renderFragment',
     type: 'text',

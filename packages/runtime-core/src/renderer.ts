@@ -34,6 +34,8 @@ export function createRenderer(options) {
     } else if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
       // 如果是组件, 则将组件的subTree的el卸载掉
       unmount(vnode.component.subTree)
+    } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
+      vnode.type.remove(vnode, unmount)
     } else {
       hostRemove(vnode.el)
     }
@@ -507,6 +509,18 @@ export function createRenderer(options) {
       default: {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor, parentComponent)
+        } else if (shapeFlag & ShapeFlags.TELEPORT) {
+          type.process(n1, n2, container, anchor, {
+            mountChildren,
+            patchChildren,
+            move(vnode, container, anchor) {
+              hostInsert(
+                vnode.component ? vnode.component.subTree.el : vnode.el,
+                container,
+                anchor,
+              )
+            },
+          })
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
           processComponent(n1, n2, container, anchor, parentComponent)
         }
