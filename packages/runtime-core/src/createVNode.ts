@@ -50,7 +50,7 @@ export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
 }
 
-export function createVNode(type: VNodeType, props?: PropsType, children?: VNodeNormalizedChildren) {
+export function createVNode(type: VNodeType, props?: PropsType | null, children?: VNodeNormalizedChildren) {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : isObject(type)

@@ -1,6 +1,7 @@
 import { ref } from '@mini-vue/reactivity'
 import {
   Fragment,
+  Text,
   h,
   inject,
   provide,
@@ -28,7 +29,10 @@ const RenderComponent = {
 
     return () => {
       return h(Fragment, [
-        h('div', `这是子组件 => ${a.value}`),
+        h('div', {}, [
+          `11 => ${a.value}`,
+          h('div', null, `12 => ${a.value}`),
+        ]),
         h(RenderComponent2, {}),
       ])
     }

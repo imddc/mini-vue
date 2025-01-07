@@ -1,6 +1,6 @@
 import { ShapeFlags } from '@mini-vue/shared'
 import { ReactiveEffect } from '@mini-vue/reactivity'
-import { Fragment, Text, isSameVNodeType } from './createVNode'
+import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
 import { getLIS } from './lis'
 import { queueJob } from './scheduler'
@@ -71,9 +71,26 @@ export function createRenderer(options) {
   }
 
   /**
+   * @description 用于简化h函数的编写
+   * 针对string和number
+   */
+  function normalize(children) {
+    if (Array.isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        // 做一个处理, 当渲染一个文本时,替代为创建一个Text节点
+        if (typeof children[i] === 'string' || typeof children[i] === 'number') {
+          children[i] = createVNode(Text, null, String(children[i]))
+        }
+      }
+    }
+    return children
+  }
+
+  /**
    * @description 挂载子节点
    */
   function mountChildren(children, container, parentComponent) {
+    normalize(children)
     for (let i = 0; i < children.length; i++) {
       patch(null, children[i], container, null, parentComponent)
     }
@@ -99,7 +116,7 @@ export function createRenderer(options) {
    */
   function patchChildren(n1, n2, el, parentComponent) {
     const c1 = n1.children
-    const c2 = n2.children
+    const c2 = normalize(n2.children)
 
     const prevShapeFlag = n1.shapeFlag
     const shapeFlag = n2.shapeFlag
