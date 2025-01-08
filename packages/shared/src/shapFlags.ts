@@ -1,5 +1,8 @@
 /*  eslint-disable ts/prefer-literal-enum-member */
 export enum ShapeFlags {
+  /**
+   * @description 表示html元素
+   */
   ELEMENT = 1,
   FUNCTIONAL_COMPONENT = 1 << 1,
   STATEFUL_COMPONENT = 1 << 2,

@@ -1,5 +1,7 @@
 import { ShapeFlags } from '@mini-vue/shared'
 
+export type TeleportComponentType = typeof Teleport
+
 export const Teleport = {
   __isTeleport: true,
   process(n1, n2, container, anchor, internals) {

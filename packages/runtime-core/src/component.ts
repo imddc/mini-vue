@@ -1,6 +1,13 @@
-import type { VNode, VNodeNormalizedChildren } from './createVNode'
+import type { VNode, VNodeNormalizedChildren, VNodeType } from './createVNode'
 import { proxyRefs, reactive } from '@mini-vue/reactivity'
 import { ShapeFlags, hasOwn, isFunction } from '@mini-vue/shared'
+
+export interface DefineComponentOptions {
+  props?: PropsType
+  data?: DataType
+  setup?: Setup
+  render?: Render
+}
 
 export interface DataType {
   [key: string]: any
@@ -15,7 +22,7 @@ export interface AttrsType {
 }
 
 export interface SlotsType {
-  [name: string]: unknown
+  [name: string]: any
 }
 
 export interface ComponentInstance {
@@ -37,17 +44,28 @@ export interface ComponentInstance {
   render: Render | SetupState | null
 }
 
+export interface SetupCtx {
+  attrs: AttrsType
+  slots: SlotsType
+  expose: (expose: { [key: string]: any }) => void
+  emit: (name: string, value: any) => void
+}
 export type SetupState = PropsType | AttrsType | SlotsType
-export type Setup = (props: PropsType, setupCtx: SetupState) => SetupState | Render
+export type Setup = (props: PropsType, setupCtx: SetupCtx) => SetupState | Render
 export type Render = (proxy: SetupState) => VNode
 
 export interface RawComponent {
   props?: PropsType
-  data?: () => {
-    [key in string | symbol]: any
-  }
+  data?: () => DataType
   setup?: Setup
   render?: Render
+}
+
+/**
+ * @description 用于给创建组件提供类型支持
+ */
+export function defineComponent(options: DefineComponentOptions) {
+  return options as unknown as VNodeType
 }
 
 /**
@@ -95,6 +113,8 @@ export function updateComponentPreRender(instance: ComponentInstance, nextVNode:
   instance.vnode = nextVNode
 
   updateProps(instance, instance.props, nextVNode.props)
+  // FIX: 插槽更新失效的原因在这里,之前没有更新插槽
+  Object.assign(instance.slots, nextVNode.children)
 }
 
 /**

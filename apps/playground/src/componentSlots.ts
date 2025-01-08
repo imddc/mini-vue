@@ -36,4 +36,10 @@ render(h(Component, {}, {
   default: v => h('div', `父组件插槽 + ${v}`),
 }), appEl)
 
+setTimeout(() => {
+  render(h(Component, {}, {
+    default: v => h('div', `父组件插槽 ------ ${v}`),
+  }), appEl)
+}, 1000)
+
 console.dir(appEl)

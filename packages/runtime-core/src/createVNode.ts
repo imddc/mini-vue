@@ -1,15 +1,24 @@
 import type { ComponentInstance, PropsType, RawComponent, SlotsType } from './component'
+import type { KeepAliveComponentType } from './KeepAlive'
+import type { TeleportComponentType } from './Teleport'
 import { ShapeFlags, isFunction, isObject, isString } from '@mini-vue/shared'
 import { isTeleport } from './Teleport'
 
 export type VNodeType =
   | string
   | RawComponent
-  | ComponentInstance
   | typeof Text
   | typeof Fragment
+  | ComponentInstance
+  | KeepAliveComponentType
+  | TeleportComponentType
 
-export interface VNode {
+export interface BuildInComponent {
+  __isTeleport?: boolean
+  __isKeepAlive?: boolean
+}
+
+export interface VNode extends BuildInComponent {
   key: any
   el: HTMLElement | null
   children: VNodeNormalizedChildren
@@ -18,7 +27,6 @@ export interface VNode {
   shapeFlag: ShapeFlags
   type: VNodeType
   __v_isVNode: boolean
-
 }
 
 type VNodeChildAtom =
@@ -51,7 +59,7 @@ export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
 }
 
-export function createVNode(type: VNodeType, props?: PropsType | null, children?: VNodeNormalizedChildren) {
+export function createVNode(type: VNodeType, props?: PropsType | null, children?: VNodeNormalizedChildren): VNode {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : isTeleport(type)
@@ -72,13 +80,12 @@ export function createVNode(type: VNodeType, props?: PropsType | null, children?
     shapeFlag,
     ref: props?.ref,
   }
-
   // 对于非组件vnode children 只分两种情况 文本和数组
   // 对于组件vnode children 为插槽
   if (children) {
     if (Array.isArray(children)) {
       vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN // 16 + 1
-      // 不是数组 但是对象
+      // children为对象类型, 即为插槽
     } else if (isObject(children)) {
       vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN // 32 + 4
     } else {
@@ -88,5 +95,5 @@ export function createVNode(type: VNodeType, props?: PropsType | null, children?
     }
   }
 
-  return vnode
+  return vnode as unknown as VNode
 }
