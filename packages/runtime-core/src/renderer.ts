@@ -1,3 +1,9 @@
+import type { VNode } from './createVNode'
+import type {
+  ComponentInstance,
+  PropsType,
+} from './component'
+import type { TeleportComponentType } from './Teleport'
 import { ShapeFlags } from '@mini-vue/shared'
 import { ReactiveEffect, isRef } from '@mini-vue/reactivity'
 import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
@@ -11,6 +17,7 @@ import {
   updateComponentPreRender,
 } from './component'
 import { LifeCycle, LifeCycleHooks, invokeArrayFns } from './apiLifeCycle'
+import { isKeepAlive } from './KeepAlive'
 
 export function createRenderer(options) {
   const {
@@ -28,25 +35,34 @@ export function createRenderer(options) {
   /**
    * @description 卸载元素
    */
-  function unmount(vnode) {
-    if (vnode.type === Fragment) {
-      unmountChildren(vnode.children)
-    } else if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
-      // 如果是组件, 则将组件的subTree的el卸载掉
-      unmount(vnode.component.subTree)
-    } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
-      vnode.type.remove(vnode, unmount)
-    } else {
+  function unmount(vnode: VNode, parentComponent: ComponentInstance | null) {
+    const { shapeFlag } = vnode
+
+    const performRemove = () => {
       hostRemove(vnode.el)
+    }
+
+    if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
+      // keepAlive失活逻辑
+      parentComponent?.ctx.deactivate(vnode)
+    } else if (vnode.type === Fragment) {
+      unmountChildren(vnode.children, parentComponent)
+    } else if (shapeFlag & ShapeFlags.COMPONENT) {
+      // 如果是组件, 则将组件的subTree的el卸载掉
+      unmount(vnode.component.subTree!, parentComponent)
+    } else if (shapeFlag & ShapeFlags.TELEPORT) {
+      (vnode.type as TeleportComponentType).remove(vnode, unmount)
+    } else {
+      performRemove()
     }
   }
 
   /**
    * @description 全量卸载子节点
    */
-  function unmountChildren(children) {
+  function unmountChildren(children, parentComponent: ComponentInstance | null) {
     for (let i = 0; i < children.length; i++) {
-      unmount(children[i])
+      unmount(children[i], parentComponent)
     }
   }
 
@@ -146,9 +162,9 @@ export function createRenderer(options) {
     } else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 新的是数组
       if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        patchKeyedChildren(c1, c2, el)
+        patchKeyedChildren(c1, c2, el, parentComponent)
       } else {
-        unmountChildren(c1)
+        unmountChildren(c1, parentComponent)
         if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
           hostSetElementText(el, c2)
         }
@@ -170,7 +186,7 @@ export function createRenderer(options) {
   /**
    * @description 比较元素的props
    */
-  function patchProps(oldProps, newProps, el) {
+  function patchProps(oldProps: PropsType, newProps: PropsType, el) {
     // 将新的属性添加到el
     for (const key in newProps) {
       hostPatchProp(el, key, oldProps[key], newProps[key])
@@ -189,7 +205,7 @@ export function createRenderer(options) {
    * 全量diff完成
    * TODO: 快速diff in 模板编译阶段 标记动态节点
    */
-  function patchKeyedChildren(c1, c2, container) {
+  function patchKeyedChildren(c1, c2, container, parentComponent: ComponentInstance | null) {
     let i = 0
     const l2 = c2.length
     let e1 = c1.length - 1
@@ -234,7 +250,7 @@ export function createRenderer(options) {
     } else if (i > e2) {
       if (i <= e1) {
         while (i <= e1) {
-          unmount(c1[i])
+          unmount(c1[i], parentComponent)
           i++
         }
       }
@@ -266,7 +282,7 @@ export function createRenderer(options) {
 
         // 在新的中不存在
         if (newIndex == null) {
-          unmount(vnode)
+          unmount(vnode, parentComponent)
         } else {
           newIndexToOldIndexMap[newIndex - s2] = i + 1
           // 存在则将相同key的vnode复用
@@ -433,6 +449,17 @@ export function createRenderer(options) {
       )
     )
 
+    // 对keepAlive组件进行特殊处理
+    if (isKeepAlive(vnode)) {
+      instance.ctx.renderer = {
+        createElement: hostCreateElement,
+        move(vnode, container, anchor) {
+          hostInsert(vnode.component.subTree!.el, container, anchor)
+        },
+        unmount,
+      }
+    }
+
     // 启动组件
     setupComponent(instance)
 
@@ -443,10 +470,15 @@ export function createRenderer(options) {
   /**
    * @description 处理组件
    */
-  function processComponent(n1, n2, container, anchor, parentComponent) {
+  function processComponent(n1: VNode, n2: VNode, container, anchor, parentComponent: ComponentInstance | null) {
     if (n1 == null) {
-      // mount
-      mountComponent(n2, container, anchor, parentComponent)
+      // 挂载时 若为KeepAlive 则走activate
+      if (n2.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE) {
+        parentComponent?.ctx.activate(n2, container, anchor)
+      } else {
+        // mount
+        mountComponent(n2, container, anchor, parentComponent)
+      }
     } else {
       // patch
       updateComponent(n1, n2)
@@ -483,14 +515,14 @@ export function createRenderer(options) {
   }
 
   // 初始化和diff算法
-  function patch(n1, n2, container, anchor = null, parentComponent = null) {
+  function patch(n1, n2, container, anchor = null, parentComponent: ComponentInstance | null = null) {
     if (n1 === n2) {
       return
     }
 
     // 移除老的dom
     if (n1 && !isSameVNodeType(n1, n2)) {
-      unmount(n1)
+      unmount(n1, parentComponent)
       n1 = null
     }
 
@@ -537,7 +569,7 @@ export function createRenderer(options) {
     if (vnode == null) {
       if (container._vnode) {
         // 卸载
-        unmount(container._vnode)
+        unmount(container._vnode, null)
       }
     } else {
       patch(container._vnode || null, vnode, container) // 初始化和更新

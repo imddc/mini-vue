@@ -46,40 +46,40 @@ let index = 0
 btnEl.addEventListener('click', () => {
   console.log(`${index} run => `)
   queue[index++]?.()
+  if (index > queue.length) {
+    console.log('重新走')
+    index = 0
+  }
 })
 
-queue.push(
-  () => render(h(KeepAlive, null, {
-    default: () => h(A1, null),
-  }), appEl),
+queue.push(() => render(h(KeepAlive, null, {
+  default: () => h(A1, { key: 'a1' }),
+}), appEl),
 )
 
-queue.push(
-  () => render(h(KeepAlive, null, {
-    default: () => h(A2, null),
-  }), appEl),
+queue.push(() => render(h(KeepAlive, null, {
+  default: () => h(A2, { key: 'a2' }),
+}), appEl),
 )
 
-queue.push(
-  () => render(h(KeepAlive, null, {
-    default: () => h(A1, null),
-  }), appEl),
+queue.push(() => render(h(KeepAlive, null, {
+  default: () => h(A1, { key: 'a1' }),
+}), appEl),
 )
 
-queue.push(
-  () => render(h(KeepAlive, null, {
-    default: () => h(A3, null),
+queue.push(() => render(h(KeepAlive, null, {
+  default: () => h(A3, { key: 'a3' }),
+}), appEl),
+)
+
+queue.push(() =>
+  render(h(KeepAlive, {
+    default: () => h(A2, { key: 'a2' }),
   }), appEl),
 )
 
 queue.push(() =>
-  render(h(KeepAlive, null, {
-    default: () => h(A2, null),
-  }), appEl),
-)
-
-queue.push(() =>
-  render(h(KeepAlive, null, {
-    default: () => h(A3, null),
+  render(h(KeepAlive, {
+    default: () => h(A3, { key: 'a3' }),
   }), appEl),
 )

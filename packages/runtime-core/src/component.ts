@@ -25,10 +25,20 @@ export interface SlotsType {
   [name: string]: any
 }
 
+interface ComponentInstanceCtx {
+  activate: (vnode: VNode, container, anchor) => void
+  deactivate: (vnode: VNode) => void
+  renderer: {
+    createElement: any
+    move: (vnode: VNode, container, anchor) => any
+    unmount: (vnode: VNode, parentComponent: ComponentInstance) => void
+  }
+}
+
 export interface ComponentInstance {
   data: DataType | null
   vnode: VNode
-  subTree: null
+  subTree: VNode | null
   isMountd: boolean
   update: () => void
   props: PropsType
@@ -42,6 +52,7 @@ export interface ComponentInstance {
   provides: Record<string | symbol, any>
   next: VNode | null
   render: Render | SetupState | null
+  ctx: ComponentInstanceCtx
 }
 
 export interface SetupCtx {
@@ -259,6 +270,7 @@ export function createComponentInstance(vnode: VNode, parent: ComponentInstance)
     provides: parent ? parent.provides : Object.create(null),
     next: null,
     render: null,
+    ctx: {} as ComponentInstanceCtx,
   }
 
   return instance
