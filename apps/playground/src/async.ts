@@ -23,7 +23,7 @@ const AsyncComponent = defineAsyncComponent({
       // throw new Error('error')
     })
   },
-  // timeout: 400,
+  timeout: 400,
   errorComponent: defineComponent({
     setup() {
       return () => h('div', 'error component')

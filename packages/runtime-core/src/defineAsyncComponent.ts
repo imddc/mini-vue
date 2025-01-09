@@ -7,7 +7,7 @@ import { defineComponent } from './defineComponent'
 
 interface defineAsyncComponentOptions {
   loader: defineAsyncComponentLoader
-  // timeout?: number
+  timeout?: number
   errorComponent?: VNodeType
 }
 type defineAsyncComponentLoader = () => Promise<VNodeType>
@@ -24,7 +24,7 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
 
   return defineComponent({
     setup() {
-      const { loader, errorComponent } = options as defineAsyncComponentOptions
+      const { loader, timeout, errorComponent } = options as defineAsyncComponentOptions
       const loaded = ref(false)
       const error = ref(false)
 
@@ -37,11 +37,12 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
           error.value = err
         })
 
-      // if (timeout) {
-      //   setTimeout(() => {
-      //     error.value = true
-      //   }, timeout)
-      // }
+      if (timeout) {
+        setTimeout(() => {
+          error.value = true
+          throw new Error('组件加载超时')
+        }, timeout)
+      }
 
       const placeHolder = h(Fragment, '')
 
