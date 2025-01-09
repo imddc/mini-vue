@@ -1,4 +1,4 @@
-import { Fragment, KeepAlive, Text, defineComponent, h, onMounted } from '@mini-vue/runtime-core'
+import { KeepAlive, defineComponent, h, onMounted } from '@mini-vue/runtime-core'
 import { render } from '@mini-vue/runtime-dom'
 
 const appEl = document.querySelector('#app')!
@@ -44,42 +44,45 @@ const A3 = defineComponent({
 const queue: Array<() => void> = []
 let index = 0
 btnEl.addEventListener('click', () => {
-  console.log(`${index} run => `)
   queue[index++]?.()
-  if (index > queue.length) {
+  if (index === queue.length) {
     console.log('重新走')
     index = 0
   }
 })
 
-queue.push(() => render(h(KeepAlive, null, {
-  default: () => h(A1, { key: 'a1' }),
-}), appEl),
-)
-
-queue.push(() => render(h(KeepAlive, null, {
-  default: () => h(A2, { key: 'a2' }),
-}), appEl),
-)
-
-queue.push(() => render(h(KeepAlive, null, {
-  default: () => h(A1, { key: 'a1' }),
-}), appEl),
-)
-
-queue.push(() => render(h(KeepAlive, null, {
-  default: () => h(A3, { key: 'a3' }),
-}), appEl),
+queue.push(() =>
+  render(h(KeepAlive, null, {
+    default: () => h(A1, { key: 'a1' }),
+  }), appEl),
 )
 
 queue.push(() =>
-  render(h(KeepAlive, {
+  render(h(KeepAlive, null, {
     default: () => h(A2, { key: 'a2' }),
   }), appEl),
 )
 
 queue.push(() =>
-  render(h(KeepAlive, {
+  render(h(KeepAlive, null, {
+    default: () => h(A1, { key: 'a1' }),
+  }), appEl),
+)
+
+queue.push(() =>
+  render(h(KeepAlive, null, {
+    default: () => h(A3, { key: 'a3' }),
+  }), appEl),
+)
+
+queue.push(() =>
+  render(h(KeepAlive, null, {
+    default: () => h(A2, { key: 'a2' }),
+  }), appEl),
+)
+
+queue.push(() =>
+  render(h(KeepAlive, null, {
     default: () => h(A3, { key: 'a3' }),
   }), appEl),
 )

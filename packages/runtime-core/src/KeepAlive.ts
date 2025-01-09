@@ -1,6 +1,7 @@
 import { ShapeFlags } from '@mini-vue/shared'
 import { onMounted, onUpdated } from './apiLifeCycle'
 import { getCurrentInstance } from './component'
+import { isVNode } from './createVNode'
 
 export type KeepAliveComponentType = typeof KeepAlive
 
@@ -39,19 +40,25 @@ export const KeepAlive = {
     return () => {
       // vnode为keepAlive组件的默认插槽
       const vnode = slots.default()
+      // 如果
+      if (
+        !isVNode(vnode) || !(vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT)
+      ) {
+        return vnode
+      }
       // 默认插槽即h(..) 执行后返回一个vnode 即用户定义的组件
       // vnode.type就是用户自定义组件的本身
       const comp = vnode.type
 
       const key = vnode.key == null ? comp : vnode.key
 
-      const cacheVnode = cache.get(key)
+      const cachedVnode = cache.get(key)
 
       pendingCacheKey = key
-      if (cacheVnode) {
+      if (cachedVnode) {
         // 直接复用组件的实例
-        vnode.component = cacheVnode.component
-        vnode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE
+        vnode.component = cachedVnode.component
+        vnode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE
 
         // 保证是最新的
         keys.delete(key)
