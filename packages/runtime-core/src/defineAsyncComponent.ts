@@ -9,6 +9,8 @@ interface defineAsyncComponentOptions {
   loader: defineAsyncComponentLoader
   timeout?: number
   errorComponent?: VNodeType
+  delay?: number
+  loadingComponent?: VNodeType
 }
 type defineAsyncComponentLoader = () => Promise<VNodeType>
 
@@ -24,9 +26,17 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
 
   return defineComponent({
     setup() {
-      const { loader, timeout, errorComponent } = options as defineAsyncComponentOptions
+      const { loader, timeout, delay = 200, loadingComponent, errorComponent } = options as defineAsyncComponentOptions
       const loaded = ref(false)
       const error = ref(false)
+
+      const delayed = ref(!!delay)
+
+      if (delay) {
+        setTimeout(() => {
+          delayed.value = false
+        }, delay)
+      }
 
       loader()
         .then((c) => {
@@ -53,6 +63,8 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
           return h(errorComponent, {
             error: error.value,
           })
+        } else if (!delayed.value && loadingComponent) {
+          return h(loadingComponent, {})
         }
         return placeHolder
       }

@@ -12,21 +12,26 @@ const AsyncComponent = defineAsyncComponent({
           defineComponent({
             setup() {
               return () => (
-                h('div', 'hi async component')
+                h('h2', 'hi async component')
               )
             },
           }),
         )
-      }, 1000)
-
+      }, 3000)
       // 这里触发错误拦截
       // throw new Error('error')
     })
   },
-  timeout: 400,
+  timeout: 2000,
   errorComponent: defineComponent({
     setup() {
-      return () => h('div', 'error component')
+      return () => h('h2', 'error component')
+    },
+  }),
+  delay: 1000,
+  loadingComponent: defineComponent({
+    render() {
+      return h('h2', 'loading...')
     },
   }),
 })
