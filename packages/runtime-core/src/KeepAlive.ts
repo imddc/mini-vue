@@ -26,6 +26,10 @@ export const KeepAlive = {
     const storageContent = createElement('div')
     instance.ctx.deactivate = function (vnode) {
       // 将dom元素临时移动到div中,没有被销毁
+      // TODO: 目前KeepAlive的默认插槽(即内部组件)的subTree仅支持单根节点
+      // Fragment ❌ | Component ❌
+      // Element ✅ | Text ✅
+      // 单节点的子节点不受影响
       move(vnode, storageContent, null)
     }
 

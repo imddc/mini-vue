@@ -1,4 +1,4 @@
-import { KeepAlive, defineComponent, h, onMounted } from '@mini-vue/runtime-core'
+import { Fragment, KeepAlive, Text, defineComponent, h, onMounted } from '@mini-vue/runtime-core'
 import { render } from '@mini-vue/runtime-dom'
 
 const appEl = document.querySelector('#app')!
@@ -8,14 +8,44 @@ const btnEl = document.querySelector('#btn')!
 // 组件不会被卸载,而是将dom移除
 // 内部缓存dom
 
+// const InnerComp = defineComponent({
+//   render() {
+//     return (
+//       h('div', 'hha')
+//     )
+//   },
+// })
+
 const A1 = defineComponent({
   setup() {
     onMounted(() => {
       console.log('a1 mounted')
     })
-    return () => {
-      return h('h1', 'a1')
-    }
+    // X
+    // return () => h(Fragment, [
+    //   'text 1 ===',
+    //   'text 2 ===',
+    //   'text 3 ===',
+    //   'text 4 ===',
+    //   'text 5 ===',
+    //   'text 6 ===',
+    //   h(InnerComp, {}),
+    // ])
+
+    // X
+    // return () => h(InnerComp, [
+    //   h('h1', 'hh'),
+    //   h(InnerComp, {}),
+    // ])
+
+    // ✅
+    // return () => h('div', [
+    //   h('h1', 'hh'),
+    //   h(InnerComp, {}),
+    // ])
+
+    // ✅
+    return () => h(Text, 'hah')
   },
 })
 
