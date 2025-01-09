@@ -45,8 +45,8 @@ describe('h', () => {
     // l === 3 && vnode
     const h_2 = h('div', null, h('p', 'text'))
     expect(h_2.children).toBeInstanceOf(Array)
-    expect(h_2.children.length).toBe(1)
-    expect(h_2.children[0].children).toBe('text')
+    expect(h_2.children!.length).toBe(1)
+    expect(h_2.children![0].children).toBe('text')
 
     // normal
 
