@@ -7,7 +7,7 @@ import type { TeleportComponentType } from './Teleport'
 import { PatchFlags, ShapeFlags } from '@mini-vue/shared'
 import { ReactiveEffect, isRef } from '@mini-vue/reactivity'
 import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
-import { createAppAPI } from './createApp'
+import { createAppAPI } from './apiCreateApp'
 import { getLIS } from './lis'
 import { queueJob } from './scheduler'
 import {

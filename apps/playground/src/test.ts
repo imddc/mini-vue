@@ -1,18 +1,21 @@
-import { compile, generate, parse, transform } from '@mini-vue/compiler-core'
+import { defineComponent, h } from '@mini-vue/runtime-core'
+import { createApp } from '@mini-vue/runtime-dom'
+import { ref } from '@mini-vue/reactivity'
 
-const template = `
-    <template>
-      <div>
-        {{ a }}
-      </div>
-    </template>
-`
+const appEl = document.querySelector('#app')!
 
-const ast = parse(template)
-console.log('ast => ', ast)
+const App = defineComponent({
+  setup() {
+    console.log(1)
 
-transform(ast)
-console.log('transformed => ', ast)
+    const count = ref(1)
 
-const code = generate(ast)
-console.log('code => ', code)
+    return () => h('div', [
+      `count.value => ${count.value}`,
+      h('button', { onClick: () => count.value++ }, 'click me bro'),
+    ])
+  },
+})
+
+const app = createApp(App, {})
+app.mount(appEl)

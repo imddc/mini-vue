@@ -11,7 +11,9 @@ export {
   unRef,
   proxyRefs,
 } from '@mini-vue/reactivity'
-export { render } from '@mini-vue/runtime-dom'
+
+export { render, createApp } from '@mini-vue/runtime-dom'
+
 export {
   h,
   createVNode,
@@ -27,4 +29,5 @@ export {
   onBeforeUpdate,
   onUpdated,
 } from '@mini-vue/runtime-core'
+
 export { compile } from '@mini-vue/compiler-core'
