@@ -62,6 +62,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@mini-vue/compiler-core':
+        specifier: workspace:^
+        version: link:../../packages/compiler-core
       '@mini-vue/reactivity':
         specifier: workspace:^
         version: link:../../packages/reactivity
@@ -78,6 +81,12 @@ importers:
       vite:
         specifier: ^6.0.6
         version: 6.0.6(@types/node@22.10.2)(jiti@2.4.2)(yaml@2.6.1)
+
+  packages/compiler-core:
+    dependencies:
+      '@mini-vue/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/reactivity:
     dependencies:

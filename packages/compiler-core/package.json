@@ -1,0 +1,10 @@
+{
+  "name": "@mini-vue/compiler-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "compiler-core",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@mini-vue/shared": "workspace:^"
+  }
+}
