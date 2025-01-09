@@ -34,10 +34,17 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
 
   return defineComponent({
     setup() {
-      const { loader, timeout, errorComponent, delay = 200, loadingComponent, onError } = options as defineAsyncComponentOptions
+      const {
+        loader,
+        timeout,
+        errorComponent,
+        delay = 200,
+        loadingComponent,
+        onError,
+      } = options as defineAsyncComponentOptions
+
       const loaded = ref(false)
       const error = ref(false)
-
       const delayed = ref(!!delay)
 
       if (delay) {
@@ -76,7 +83,9 @@ export function defineAsyncComponent(options: defineAsyncComponentOptions | defi
       if (timeout) {
         setTimeout(() => {
           error.value = true
-          throw new Error('组件加载超时')
+          if (!loaded.value) {
+            throw new Error('组件加载超时')
+          }
         }, timeout)
       }
 

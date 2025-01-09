@@ -3,33 +3,42 @@ import { render } from '@mini-vue/runtime-dom'
 
 const appEl = document.querySelector('#app')!
 // const btnEl = document.querySelector('#btn')!
+const Component = defineComponent({
+  setup(_, { slots }) {
+    return () => h(Fragment, [
+      h('h1', 'hhhhh'),
+      slots.default?.(),
+    ])
+  },
+})
 
 const AsyncComponent = defineAsyncComponent({
-  loader: () => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        reject(
+  loader: () => new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0.5) {
+        resolve(
           defineComponent({
             setup() {
               return () => (
-                h('h2', 'hi async component')
+                h(Component, {}, {
+                  default: () => h('h2', 'hi async component'),
+                })
               )
             },
           }),
         )
-      }, 1000)
-
-      // 这里触发错误拦截
-      // throw new Error('出错了')
-    })
-  },
+      } else {
+        reject(new Error('出错了'))
+      }
+    }, 1000)
+  }),
   timeout: 2000,
   errorComponent: defineComponent({
     setup() {
       return () => h('h2', 'error component')
     },
   }),
-  delay: 1000,
+  delay: 500,
   loadingComponent: defineComponent({
     render() {
       return h('h2', 'loading...')
@@ -41,6 +50,7 @@ const AsyncComponent = defineAsyncComponent({
       console.log('丸辣, 这次彻底没了')
     } else {
       setTimeout(retry, 1000)
+      console.log(`重试第${retries}次`)
     }
   },
 })
