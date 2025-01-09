@@ -6,9 +6,9 @@ const appEl = document.querySelector('#app')!
 
 const AsyncComponent = defineAsyncComponent({
   loader: () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        resolve(
+        reject(
           defineComponent({
             setup() {
               return () => (
@@ -17,9 +17,10 @@ const AsyncComponent = defineAsyncComponent({
             },
           }),
         )
-      }, 3000)
+      }, 1000)
+
       // 这里触发错误拦截
-      // throw new Error('error')
+      // throw new Error('出错了')
     })
   },
   timeout: 2000,
@@ -34,6 +35,14 @@ const AsyncComponent = defineAsyncComponent({
       return h('h2', 'loading...')
     },
   }),
+  onError(errMsg, retry, fail, retries) {
+    if (retries > 3) {
+      fail()
+      console.log('丸辣, 这次彻底没了')
+    } else {
+      setTimeout(retry, 1000)
+    }
+  },
 })
 
 render(h(AsyncComponent, null), appEl)
