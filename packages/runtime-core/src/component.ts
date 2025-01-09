@@ -84,6 +84,25 @@ export function hasPropsChange(prevProps: PropsType, nextProps: PropsType) {
 }
 
 /**
+ * 用于统一渲染组件
+ * 函数式组件和状态组件
+ */
+export function renderComponent(instance) {
+  const { render, vnode, proxy, attrs } = instance
+
+  let subTree
+  // 状态组件
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    // 获取render返回的vnode
+    subTree = render.call(proxy, proxy)
+  } else {
+    // 函数式组件
+    subTree = vnode.type(attrs)
+  }
+  return subTree
+}
+
+/**
  * @description 更新组件的props
  */
 export function updateProps(instance: ComponentInstance, prevProps: PropsType, nextProps: PropsType) {

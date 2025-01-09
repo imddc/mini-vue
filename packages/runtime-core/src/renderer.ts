@@ -4,7 +4,7 @@ import type {
   PropsType,
 } from './component'
 import type { TeleportComponentType } from './Teleport'
-import { ShapeFlags } from '@mini-vue/shared'
+import { PatchFlags, ShapeFlags } from '@mini-vue/shared'
 import { ReactiveEffect, isRef } from '@mini-vue/reactivity'
 import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './createApp'
@@ -12,12 +12,14 @@ import { getLIS } from './lis'
 import { queueJob } from './scheduler'
 import {
   createComponentInstance,
+  renderComponent,
   setupComponent,
   updateComponent,
   updateComponentPreRender,
 } from './component'
 import { LifeCycle, LifeCycleHooks, invokeArrayFns } from './apiLifeCycle'
 import { isKeepAlive } from './KeepAlive'
+import { normalizeProps, normalizeStringNumberChildren, setRef } from './rendererHelper'
 
 export function createRenderer(options) {
   const {
@@ -82,42 +84,35 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       hostSetElementText(el, vnode.children)
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode.children, el, parentComponent)
+      mountChildren(vnode.children, el, anchor, parentComponent)
     }
 
     hostInsert(el, container, anchor)
   }
 
   /**
-   * @description 用于简化h函数的编写
-   * 针对string和number
+   * @description 挂载子节点
    */
-  function normalize(children) {
-    if (Array.isArray(children)) {
-      for (let i = 0; i < children.length; i++) {
-        // 做一个处理, 当渲染一个文本时,替代为创建一个Text节点
-        if (typeof children[i] === 'string' || typeof children[i] === 'number') {
-          children[i] = createVNode(Text, null, String(children[i]))
-        }
-      }
+  function mountChildren(children, container, anchor, parentComponent: ComponentInstance) {
+    normalizeStringNumberChildren(children)
+    for (let i = 0; i < children.length; i++) {
+      patch(null, children[i], container, anchor, parentComponent)
     }
-    return children
   }
 
   /**
-   * @description 挂载子节点
+   * @description 比较动态children
    */
-  function mountChildren(children, container, parentComponent) {
-    normalize(children)
-    for (let i = 0; i < children.length; i++) {
-      patch(null, children[i], container, null, parentComponent)
+  function patchBlockChildren(n1: VNode, n2: VNode, el, anchor, parentComponent: ComponentInstance) {
+    for (let i = 0; i < n2.dynamicChildren!.length; i++) {
+      patch(n1.dynamicChildren?.[i], n2.dynamicChildren?.[i], el, anchor, parentComponent)
     }
   }
 
   /**
    * @description 比较元素
    */
-  function patchElement(n1, n2, parentComponent) {
+  function patchElement(n1, n2, anchor, parentComponent: ComponentInstance) {
     // 1. 比较元素差异 对dom元素复用
     // 2. 比较属性和元素的子节点
     const el = (n2.el = n1.el)
@@ -125,16 +120,38 @@ export function createRenderer(options) {
     const oldProps = n1.props || {}
     const newProps = n2.props || {}
 
-    patchProps(oldProps, newProps, el)
-    patchChildren(n1, n2, el, parentComponent)
+    const { patchFlag, dynamicChildren } = n2
+
+    if (patchFlag) {
+      if (patchFlag & PatchFlags.CLASS) {
+        if (oldProps.class !== newProps.class) {
+          hostPatchProp(el, 'class', null, newProps.class)
+        }
+      }
+      if (patchFlag & PatchFlags.TEXT) {
+        if (n1.children !== n2.children) {
+          return hostSetElementText(el, n2.children)
+        }
+      }
+    } else {
+      // 处理所有属性
+      patchProps(oldProps, newProps, el)
+    }
+
+    if (dynamicChildren) {
+      // 比较动态节点
+      patchBlockChildren(n1, n2, el, anchor, parentComponent)
+    } else {
+      patchChildren(n1, n2, el, anchor, parentComponent)
+    }
   }
 
   /**
    * @description 比较子节点
    */
-  function patchChildren(n1, n2, el, parentComponent) {
+  function patchChildren(n1, n2, el, anchor, parentComponent) {
     const c1 = n1.children
-    const c2 = normalize(n2.children)
+    const c2 = normalizeStringNumberChildren(n2.children)
 
     const prevShapeFlag = n1.shapeFlag
     const shapeFlag = n2.shapeFlag
@@ -150,7 +167,7 @@ export function createRenderer(options) {
     if (c1 == null) {
       // 新的是数组, 挂载
       if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        mountChildren(c2, el, parentComponent)
+        mountChildren(c2, el, anchor, parentComponent)
         // 新的是文本or null
       } else {
         // 加一层判断, 为null则不进行操作
@@ -175,7 +192,7 @@ export function createRenderer(options) {
         hostSetElementText(el, c2)
       } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         hostSetElementText(el, '')
-        mountChildren(c2, el, parentComponent)
+        mountChildren(c2, el, anchor, parentComponent)
       } else {
         hostSetElementText(el, '')
       }
@@ -325,7 +342,7 @@ export function createRenderer(options) {
       mountElement(n2, container, anchor, parentComponent)
     } else {
       // diff
-      patchElement(n1, n2, parentComponent)
+      patchElement(n1, n2, anchor, parentComponent)
     }
   }
 
@@ -346,31 +363,12 @@ export function createRenderer(options) {
   /**
    * @description 处理Fragment节点
    */
-  function processFragment(n1, n2, container, parentComponent) {
+  function processFragment(n1, n2, container, anchor, parentComponent) {
     if (n1 == null) {
-      mountChildren(n2.children, container, parentComponent)
+      mountChildren(n2.children, container, anchor, parentComponent)
     } else {
-      patchChildren(n1, n2, container, parentComponent)
+      patchChildren(n1, n2, container, anchor, parentComponent)
     }
-  }
-
-  /**
-   * 用于统一渲染组件
-   * 函数式组件和状态组件
-   */
-  function renderComponent(instance) {
-    const { render, vnode, proxy, attrs } = instance
-
-    let subTree
-    // 状态组件
-    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-      // 获取render返回的vnode
-      subTree = render.call(proxy, proxy)
-    } else {
-      // 函数式组件
-      subTree = vnode.type(attrs)
-    }
-    return subTree
   }
 
   /**
@@ -485,35 +483,6 @@ export function createRenderer(options) {
     }
   }
 
-  /**
-   * @description 设置ref
-   * TODO: ref的值为组件时应为组件实例, 即使组件expose了, 也应该是组件实例
-   * 为dom时应为vnode的挂载dom
-   */
-  function setRef(rawRef, vnode) {
-    const value = vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT
-      // ? (vnode.component.exposed || vnode.component.proxy)
-      ? vnode.component
-      : vnode.el
-
-    if (isRef(rawRef)) {
-      rawRef.value = value
-    }
-  }
-
-  /**
-   * @description 将ref排除出props
-   */
-  function normalizeProps(rawProps) {
-    const REF_KEY = 'ref'
-    for (const key in rawProps) {
-      if (key === REF_KEY) {
-        delete rawProps[key]
-      }
-    }
-    return rawProps
-  }
-
   // 初始化和diff算法
   function patch(n1, n2, container, anchor = null, parentComponent: ComponentInstance | null = null) {
     if (n1 === n2) {
@@ -535,7 +504,7 @@ export function createRenderer(options) {
         break
       }
       case Fragment: {
-        processFragment(n1, n2, container, parentComponent)
+        processFragment(n1, n2, container, anchor, parentComponent)
         break
       }
       default: {
