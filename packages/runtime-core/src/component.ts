@@ -2,13 +2,6 @@ import type { VNode, VNodeNormalizedChildren, VNodeType } from './createVNode'
 import { proxyRefs, reactive } from '@mini-vue/reactivity'
 import { ShapeFlags, hasOwn, isFunction } from '@mini-vue/shared'
 
-export interface DefineComponentOptions {
-  props?: PropsType
-  data?: DataType
-  setup?: Setup
-  render?: Render
-}
-
 export interface DataType {
   [key: string]: any
 }
@@ -70,13 +63,6 @@ export interface RawComponent {
   data?: () => DataType
   setup?: Setup
   render?: Render
-}
-
-/**
- * @description 用于给创建组件提供类型支持
- */
-export function defineComponent(options: DefineComponentOptions) {
-  return options as unknown as VNodeType
 }
 
 /**
