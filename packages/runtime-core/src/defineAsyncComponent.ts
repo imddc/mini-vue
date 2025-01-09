@@ -1,25 +1,59 @@
-import type { RawComponent } from './component'
 import type { VNodeType } from './createVNode'
 import { ref } from '@mini-vue/reactivity'
+import { isFunction } from '@mini-vue/shared'
 import { Fragment } from './createVNode'
 import { h } from './h'
 import { defineComponent } from './defineComponent'
 
+interface defineAsyncComponentOptions {
+  loader: defineAsyncComponentLoader
+  // timeout?: number
+  errorComponent?: VNodeType
+}
+type defineAsyncComponentLoader = () => Promise<VNodeType>
+
 /**
  * @description 定义一个异步组件
  */
-export function defineAsyncComponent(loader: () => Promise<VNodeType>) {
-  let Comp: VNodeType | null = null
+export function defineAsyncComponent(options: defineAsyncComponentOptions | defineAsyncComponentLoader): VNodeType {
+  // 预处理
+  if (isFunction(options)) {
+    options = { loader: options as defineAsyncComponentLoader }
+  }
+  let resolvedComponent: VNodeType | null = null
+
   return defineComponent({
     setup() {
+      const { loader, errorComponent } = options as defineAsyncComponentOptions
       const loaded = ref(false)
-      loader().then((c) => {
-        Comp = c
-        loaded.value = true
-      })
+      const error = ref(false)
+
+      loader()
+        .then((c) => {
+          resolvedComponent = c
+          loaded.value = true
+        })
+        .catch((err) => {
+          error.value = err
+        })
+
+      // if (timeout) {
+      //   setTimeout(() => {
+      //     error.value = true
+      //   }, timeout)
+      // }
+
+      const placeHolder = h(Fragment, '')
 
       return () => {
-        return loaded.value ? h(Comp!, null) : h(Fragment, '')
+        if (loaded.value && resolvedComponent) {
+          return h(resolvedComponent, null)
+        } else if (error.value && errorComponent) {
+          return h(errorComponent, {
+            error: error.value,
+          })
+        }
+        return placeHolder
       }
     },
   })
