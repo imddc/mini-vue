@@ -9,12 +9,15 @@
     "index.js"
   ],
   "scripts": {
-    "serve": "serve ./example/ -p 8080"
+    "serve": "live-server --open=./example"
   },
   "dependencies": {
-    "@mini-vue/reactivity": "workspace:^"
+    "@mini-vue/compiler-core": "workspace:^",
+    "@mini-vue/reactivity": "workspace:^",
+    "@mini-vue/runtime-core": "workspace:^",
+    "@mini-vue/runtime-dom": "workspace:^"
   },
   "devDependencies": {
-    "serve": "^14.2.4"
+    "live-server": "^1.2.2"
   }
 }
