@@ -4,7 +4,9 @@
   "private": true,
   "main": "./src/index.ts",
   "dependencies": {
+    "@mini-vue/compiler-core": "workspace:^",
     "@mini-vue/reactivity": "workspace:^",
+    "@mini-vue/runtime-dom": "workspace:^",
     "@mini-vue/shared": "workspace:^"
   }
 }

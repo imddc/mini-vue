@@ -382,3 +382,9 @@ export function setCurrentInstance(instance: ComponentInstance) {
 export function unsetCurrentInstance() {
   currentInstance = null
 }
+
+// eslint-disable-next-line  unused-imports/no-unused-vars
+let compile
+export function registerRuntimeCompiler(_compile) {
+  compile = _compile
+}

@@ -1,17 +1,16 @@
-import { defineComponent, h } from '@mini-vue/runtime-core'
-import { createApp } from '@mini-vue/runtime-dom'
-import { ref } from '@mini-vue/reactivity'
+import { createApp, defineComponent, h, ref } from '@mini-vue/runtime-core'
+import { Fragment } from '@mini-vue/runtime-core/src/createVNode'
 
 const appEl = document.querySelector('#app')!
+appEl.classList.add('p-2')
 
 const App = defineComponent({
   setup() {
-    console.log(1)
-
     const count = ref(1)
 
-    return () => h('div', [
-      `count.value => ${count.value}`,
+    return () => h('div', { class: 'bg-slate-500/50 rounded p-2' }, [
+      h('h1', { class: 'text-center text-2xl' }, 'todoList'),
+      h('div', `count.value => ${count.value}`),
       h('button', { onClick: () => count.value++ }, 'click me bro'),
     ])
   },

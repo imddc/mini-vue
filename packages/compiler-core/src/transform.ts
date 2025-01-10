@@ -80,7 +80,7 @@ function createTransformContext(root) {
 
 export function transformExpression(node) {
   if (node.type === NodeTypes.INTERPOLATION) {
-    node.content.content = `_ctx.${node.content.content}` // 修改content信息
+    node.content.content = `${node.content.content}` // 修改content信息
   }
 }
 
