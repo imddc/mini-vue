@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diff Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .wrapper > * + * {
+        margin-right: 5px;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      p {
+        line-height: 1.6;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Render Page</h1>
+      <div id="app"></div>
+
+      <div class="change-btn-wrapper"></div>
+      <div class="btn-wrapper"></div>
+    </div>
+
+    <script type="module">
+      import { h, createApp, render } from '../../dist/mini-vue.esm-bundler.js'
+
+      const appEl = document.querySelector('#app')
+      const btnWrapperEl = document.querySelector('.btn-wrapper')
+      const changeBtnWrapper = document.querySelector('.change-btn-wrapper')
+
+      function addBtn(value, fn) {
+        const button = document.createElement('button')
+        button.textContent = value
+        button.onclick = () => fn()
+
+        changeBtnWrapper.appendChild(button)
+      }
+
+      const renderType = [
+        {
+          name: 'diff-from-strat',
+          init: () => {
+            render(h('div', [h('a', { key: 'a' }, 'a'), h('a', { key: 'b' }, 'b'), h('a', { key: 'c' }, 'c')]), appEl)
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a', style: { color: 'blue' } }, 'a'),
+                h('a', { key: 'b', style: { color: 'blue' } }, 'b'),
+                h('a', { key: 'd', style: { color: 'blue' } }, 'd'),
+                h('a', { key: 'e', style: { color: 'blue' } }, 'e'),
+              ]),
+              appEl,
+            )
+          },
+        },
+        {
+          name: 'diff-from-end',
+          init: () => {
+            render(
+              h('div', [h('a', { key: 'a' }, 'a '), h('a', { key: 'b' }, 'b '), h('a', { key: 'c' }, 'c ')]),
+              appEl,
+            )
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'd', style: { color: 'blue' } }, 'd '),
+                h('a', { key: 'e', style: { color: 'blue' } }, 'e '),
+                h('a', { key: 'b', style: { color: 'blue' } }, 'b '),
+                h('a', { key: 'c', style: { color: 'blue' } }, 'c '),
+              ]),
+              appEl,
+            )
+          },
+        },
+        {
+          name: 'add-node',
+          init: () => {
+            render(h('div', [h('a', { key: 'a' }, 'a '), h('a', { key: 'b' }, 'b ')]), appEl)
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a', style: { color: 'blue' } }, 'a '),
+                h('a', { key: 'b', style: { color: 'blue' } }, 'b '),
+                h('a', { key: 'c', style: { color: 'blue' } }, 'c '),
+              ]),
+              appEl,
+            )
+          },
+        },
+        {
+          name: 'remove-node',
+          init: () => {
+            render(
+              h('div', [h('a', { key: 'a' }, 'a '), h('a', { key: 'b' }, 'b '), h('a', { key: 'c' }, 'c ')]),
+              appEl,
+            )
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a', style: { color: 'blue' } }, 'a '),
+                h('a', { key: 'b', style: { color: 'blue' } }, 'b '),
+              ]),
+              appEl,
+            )
+          },
+        },
+        {
+          name: 'unknown sequence',
+          init: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a' }, 'a '),
+                h('a', { key: 'b' }, 'b '),
+                // --
+                h('a', { key: 'c' }, 'c '),
+                h('a', { key: 'd' }, 'd '),
+                h('a', { key: 'e' }, 'e '),
+                h('a', { key: 'z' }, 'z '),
+                // --
+                h('a', { key: 'f' }, 'f '),
+                h('a', { key: 'g' }, 'g '),
+              ]),
+              appEl,
+            )
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a' }, 'a '),
+                h('a', { key: 'b' }, 'b '),
+                // --
+                h('a', { key: 'e', style: { color: 'blue' } }, 'e '),
+                h('a', { key: 'c', style: { color: 'blue' } }, 'c '),
+                h('a', { key: 'd', style: { color: 'blue' } }, 'd '),
+                h('a', { key: 'h', style: { color: 'blue' } }, 'h '),
+                // --
+                h('a', { key: 'f' }, 'f '),
+                h('a', { key: 'g' }, 'g '),
+              ]),
+              appEl,
+            )
+          },
+        },
+
+        {
+          name: 'lis change',
+          init: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a' }, 'a '),
+                h('a', { key: 'b' }, 'b '),
+                // --
+                h('a', { key: 'c' }, 'c '),
+                h('a', { key: 'd' }, 'd '),
+                h('a', { key: 'e' }, 'e '),
+                // --
+                h('a', { key: 'f' }, 'f '),
+                h('a', { key: 'g' }, 'g '),
+              ]),
+              appEl,
+            )
+          },
+          change: () => {
+            render(
+              h('div', [
+                h('a', { key: 'a' }, 'a '),
+                h('a', { key: 'b' }, 'b '),
+                // --
+                h('a', { key: 'e', style: { color: 'blue' } }, 'e '),
+                h('a', { key: 'c', style: { color: 'blue' } }, 'c '),
+                h('a', { key: 'd', style: { color: 'blue' } }, 'd '),
+                h('a', { key: 'z', style: { color: 'blue' } }, 'z '),
+                // --
+                h('a', { key: 'f' }, 'f '),
+                h('a', { key: 'g' }, 'g '),
+              ]),
+              appEl,
+            )
+          },
+        },
+      ]
+
+      btnWrapperEl.addEventListener('click', (e) => {
+        appEl.innerHTML = ''
+        // @ts-expect-error non
+        appEl._vnode = null
+        changeBtnWrapper.innerHTML = ''
+
+        // @ts-expect-error non
+        const type = e.target.getAttribute('data-type')
+        const renderObj = renderType.find((item) => item.name === type)
+
+        addBtn(`${renderObj.name}-change`, renderObj.change)
+        renderObj?.init?.()
+      })
+
+      render(
+        h(
+          'div',
+          renderType.map((i) => h('button', { 'data-type': i.name }, i.name)),
+        ),
+        btnWrapperEl,
+      )
+    </script>
+  </body>
+</html>

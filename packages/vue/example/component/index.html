@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Component Render Page</title>
+    <style></style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Component Page</h1>
+      <div id="app"></div>
+    </div>
+
+    <script type="module">
+      import { createApp } from '../../dist/mini-vue.esm-bundler.js'
+      import App from './App.js'
+
+      const appEl = document.querySelector('#app')
+      const app = createApp(App)
+      app.mount(appEl)
+    </script>
+  </body>
+</html>

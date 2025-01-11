@@ -9,6 +9,14 @@
     <h1>Welcome to async</h1>
     <button id="btn">click me</button>
     <div id="app"></div>
-    <script type="module" src="../src/async.ts"></script>
+    <script type="module">
+      import App from './async.js'
+      import { createApp } from '../../dist/mini-vue.esm-bundler.js'
+
+      const appEl = document.querySelector('#app')
+
+      const app = createApp(App)
+      app.mount(appEl)
+    </script>
   </body>
 </html>

@@ -13,6 +13,9 @@
     "lint:fix": "oxlint --fix && eslint --fix",
     "playground": "pnpm -F @mini-vue/playground"
   },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",
     "@commitlint/cli": "^19.6.1",

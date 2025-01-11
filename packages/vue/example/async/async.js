@@ -1,18 +1,11 @@
-import { Fragment, Text, defineAsyncComponent, defineComponent, h, onMounted } from '@mini-vue/runtime-core'
-import { render } from '@mini-vue/runtime-dom'
+import {
+  defineAsyncComponent,
+  defineComponent,
+  h,
+} from '../../dist/mini-vue.esm-bundler.js'
+import InnerComponent from './InnerComponent.js'
 
-const appEl = document.querySelector('#app')!
-// const btnEl = document.querySelector('#btn')!
-const Component = defineComponent({
-  setup(_, { slots }) {
-    return () => h(Fragment, [
-      h('h1', 'hhhhh'),
-      slots.default?.(),
-    ])
-  },
-})
-
-const AsyncComponent = defineAsyncComponent({
+export default defineAsyncComponent({
   loader: () => new Promise((resolve, reject) => {
     setTimeout(() => {
       if (Math.random() > 0.5) {
@@ -20,7 +13,7 @@ const AsyncComponent = defineAsyncComponent({
           defineComponent({
             setup() {
               return () => (
-                h(Component, {}, {
+                h(InnerComponent, {}, {
                   default: () => h('h2', 'hi async component'),
                 })
               )
@@ -44,7 +37,7 @@ const AsyncComponent = defineAsyncComponent({
       return h('h2', 'loading...')
     },
   }),
-  onError(errMsg, retry, fail, retries) {
+  onError(_, retry, fail, retries) {
     if (retries > 3) {
       fail()
       console.log('丸辣, 这次彻底没了')
@@ -54,5 +47,3 @@ const AsyncComponent = defineAsyncComponent({
     }
   },
 })
-
-render(h(AsyncComponent, null), appEl)

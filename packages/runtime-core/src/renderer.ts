@@ -5,8 +5,8 @@ import type {
 } from './component'
 import type { TeleportComponentType } from './Teleport'
 import { PatchFlags, ShapeFlags } from '@mini-vue/shared'
-import { ReactiveEffect, isRef } from '@mini-vue/reactivity'
-import { Fragment, Text, createVNode, isSameVNodeType } from './createVNode'
+import { ReactiveEffect } from '@mini-vue/reactivity'
+import { Fragment, Text, isSameVNodeType } from './createVNode'
 import { createAppAPI } from './apiCreateApp'
 import { getLIS } from './lis'
 import { queueJob } from './scheduler'
@@ -17,7 +17,7 @@ import {
   updateComponent,
   updateComponentPreRender,
 } from './component'
-import { LifeCycle, LifeCycleHooks, invokeArrayFns } from './apiLifeCycle'
+import { LifeCycle, invokeArrayFns } from './apiLifeCycle'
 import { isKeepAlive } from './KeepAlive'
 import { normalizeProps, normalizeStringNumberChildren, setRef } from './rendererHelper'
 

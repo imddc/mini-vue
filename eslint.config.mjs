@@ -61,6 +61,7 @@ export default antfu(
           ],
         },
       ],
+      'antfu/no-import-dist': 'off',
     },
   },
   {

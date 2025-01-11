@@ -1,4 +1,4 @@
-import type { VNode, VNodeNormalizedChildren, VNodeType } from './createVNode'
+import type { VNode, VNodeNormalizedChildren } from './createVNode'
 import { proxyRefs, reactive } from '@mini-vue/reactivity'
 import { ShapeFlags, hasOwn, isFunction } from '@mini-vue/shared'
 
